@@ -98,3 +98,4 @@ Strength Grace & Flow is a **cycle-synced fitness iOS app** for women. It recomm
 | `design-system.md` | Colors, typography, component patterns |
 | `docs/phases/` | Detailed logs per implementation phase |
 | `docs/devlog.md` | This file — progress summary |
+| `docs/cli-setup.md` | Firebase and Railway CLI setup guide |
