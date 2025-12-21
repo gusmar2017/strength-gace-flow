@@ -18,7 +18,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
 
-            WorkoutsPlaceholderView()
+            WorkoutListView()
                 .tabItem {
                     Label("Workouts", systemImage: "figure.run")
                 }
