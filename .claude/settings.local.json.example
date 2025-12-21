@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy this to settings.local.json for personal overrides (not committed to git)",
+  "model": "opus",
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

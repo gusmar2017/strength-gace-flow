@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# Firebase credentials (NEVER commit these)
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
+# iOS/Xcode
+*.xcuserstate
+*.xcuserdatad/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+.build/
+
+# Firebase config (contains API keys - keep local)
+# Note: GoogleService-Info.plist CAN be committed for iOS
+# as it only contains public config, but some prefer not to
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Local settings
+.claude/settings.local.json
+
+# Temporary
+*.tmp
+*.temp
