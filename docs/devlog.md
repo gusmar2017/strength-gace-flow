@@ -4,9 +4,9 @@
 
 ## Current Status
 
-**Phase:** 0 - Project Infrastructure Setup
+**Phase:** 1 - Backend Foundation (Complete)
 **Last Updated:** 2025-12-21
-**Status:** In Progress
+**Status:** Phase 1 deployed to Railway
 
 ## Quick Context
 
@@ -25,6 +25,48 @@ Strength Grace & Flow is a **cycle-synced fitness iOS app** for women. It recomm
 ---
 
 ## Progress Timeline
+
+### 2025-12-21 — Phase 1 Complete: Backend Foundation
+
+**What was done:**
+- Implemented complete backend with Firebase Auth integration
+- Created all Phase 1 API endpoints, deployed to Railway
+- Auth middleware protecting all user/cycle endpoints
+
+**Files created:**
+- `backend/app/config/settings.py` — Pydantic settings management
+- `backend/app/config/firebase.py` — Firebase Admin SDK init & token verification
+- `backend/app/middleware/auth.py` — JWT auth middleware with CurrentUser dependency
+- `backend/app/models/user.py` — User Pydantic models (FitnessLevel, FitnessGoal enums)
+- `backend/app/models/cycle.py` — Cycle models (CyclePhase, CycleInfo, predictions)
+- `backend/app/utils/cycle_calculations.py` — Core phase detection algorithm
+- `backend/app/services/user_service.py` — Firestore CRUD for user profiles
+- `backend/app/services/cycle_service.py` — Cycle tracking & predictions
+- `backend/app/routers/users.py` — User profile REST endpoints
+- `backend/app/routers/cycle.py` — Cycle tracking REST endpoints
+
+**API Endpoints (all protected):**
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | /api/v1/users/me | Get user profile |
+| POST | /api/v1/users/me | Create user profile |
+| PATCH | /api/v1/users/me | Update user profile |
+| DELETE | /api/v1/users/me | Delete user & data |
+| GET | /api/v1/cycle/current | Current phase info |
+| POST | /api/v1/cycle/log-period | Log period start |
+| GET | /api/v1/cycle/history | Cycle history |
+| GET | /api/v1/cycle/predictions | Future phase predictions |
+
+**Deployment verified:**
+- Health: `https://strength-gace-flow-production.up.railway.app/api/health`
+- Docs: `https://strength-gace-flow-production.up.railway.app/docs`
+
+**Next Steps:**
+- [ ] Add `FIREBASE_SERVICE_ACCOUNT_JSON` to Railway environment variables
+- [ ] Create Xcode project (Phase 0 remaining step)
+- [ ] Begin Phase 2: iOS app foundation
+
+---
 
 ### 2025-12-21 — Project Initialization
 
