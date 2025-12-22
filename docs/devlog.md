@@ -4,195 +4,228 @@
 
 ## Current Status
 
-**Phase:** 4 - AI Recommendations (Basic)
+**Phase:** 5 - TestFlight (In Progress)
 **Last Updated:** 2025-12-21
-**Status:** Phases 0-4 complete, ready for TestFlight prep
+**Status:** MVP feature-complete, ready for TestFlight upload
 
-## Quick Context
+---
 
-Strength Grace & Flow is a **cycle-synced fitness iOS app** for women. It recommends workouts based on menstrual cycle phases (Menstrual, Follicular, Ovulatory, Luteal).
+## What's Been Accomplished
 
-### Tech Stack
-| Layer | Technology |
-|-------|------------|
-| iOS App | SwiftUI |
-| Backend | FastAPI (Python) on Railway |
-| Database | Firebase (Auth, Firestore, Storage) |
-| AI | Claude API |
-| Video | Vimeo |
-| Payments | StoreKit 2 |
+### ✅ Phase 0: Infrastructure
+- [x] Firebase project created and configured
+- [x] Firebase Auth enabled (Email/Password)
+- [x] Railway project deployed
+- [x] Xcode project created with Firebase SDK
+- [x] App icon added (cropped logo, 1024x1024)
+
+### ✅ Phase 1: Backend Foundation
+- [x] FastAPI backend on Railway
+- [x] Firebase Admin SDK integration
+- [x] JWT authentication middleware
+- [x] User profile CRUD endpoints
+- [x] Cycle tracking endpoints
+- [x] Phase calculation algorithm
+
+### ✅ Phase 2: iOS App Foundation
+- [x] SwiftUI app structure
+- [x] Design system (SGFTheme)
+- [x] Firebase Auth (sign up, sign in, sign out)
+- [x] 4-step onboarding flow
+- [x] Tab navigation (Today, Workouts, Calendar, Profile)
+- [x] Today view with cycle phase card
+
+### ✅ Phase 3: Workout Library
+- [x] 12 placeholder workouts (no videos yet)
+- [x] Workout list with phase/category filters
+- [x] Workout detail view
+- [x] Workout completion flow
+
+### ✅ Phase 4: AI Recommendations (Basic)
+- [x] Claude API integration
+- [x] Cycle-aware prompts
+- [x] Fallback recommendations
+- [x] `/api/v1/recommendations/today` endpoint
+
+### 🔄 Phase 5: TestFlight (Next Session)
+- [x] App icon ready
+- [ ] Create app in App Store Connect
+- [ ] Archive and upload from Xcode
+- [ ] TestFlight internal testing
+
+---
+
+## What's Remaining Before Polish
+
+### Must Do for TestFlight — Detailed Steps
+
+#### Step 1: Create App in App Store Connect
+1. Go to https://appstoreconnect.apple.com
+2. Click **Apps** → **+** (blue plus button) → **New App**
+3. Fill in the form:
+   - **Platform**: iOS
+   - **Name**: `Strength Grace & Flow`
+   - **Primary Language**: English (US)
+   - **Bundle ID**: Select `com.strengthgraceflow.StrengthGraceFlow`
+   - **SKU**: `strengthgraceflow-001`
+   - **User Access**: Full Access
+4. Click **Create**
+
+#### Step 2: Archive in Xcode
+1. Open `/Users/gustavomarquez/Documents/strength-grace-flow/StrengthGraceFlow/StrengthGraceFlow.xcodeproj`
+2. In the toolbar, select **Any iOS Device (arm64)** as the build destination (NOT a simulator)
+3. Go to menu: **Product** → **Archive**
+4. Wait for build to complete (may take a few minutes)
+5. The **Organizer** window opens automatically when done
+
+#### Step 3: Upload to App Store Connect
+1. In the Organizer window, select your new archive
+2. Click **Distribute App**
+3. Select **App Store Connect** → Click **Next**
+4. Select **Upload** → Click **Next**
+5. Keep default options (automatic signing, etc.) → Click **Next**
+6. Review and click **Upload**
+7. Wait for upload to complete
+
+#### Step 4: Wait for Apple Processing
+- Apple processes the build (10-30 minutes typically)
+- You'll get an email when it's ready
+- Check status in App Store Connect → TestFlight
+
+#### Step 5: Configure TestFlight
+1. In App Store Connect, go to **TestFlight** tab
+2. Your build should appear under **iOS Builds**
+3. Click on the build version
+4. Under **Internal Testing**, click **+** to add testers
+5. Add yourself and any team members
+6. Testers receive email invitation to download TestFlight app and install
+
+#### Common Issues & Fixes
+- **"No accounts with App Store Connect access"**: Sign in to Xcode with Apple Developer account (Xcode → Settings → Accounts)
+- **"Bundle ID not found"**: Create the app in App Store Connect first (Step 1)
+- **Code signing errors**: In Xcode project settings, set Team to your Apple Developer team
+- **"Missing compliance"**: In TestFlight, answer the export compliance question (usually "No" for encryption)
+
+### Known Limitations (OK for MVP)
+- Workouts use placeholder content (no real videos)
+- AI recommendations are basic (will expand later)
+- Calendar tab is placeholder
+- Profile tab is minimal (just sign out)
+- No onboarding data saved to backend yet
+
+### Post-TestFlight Polish (Future)
+- Real workout videos (Vimeo integration)
+- Enhanced AI recommendations with history
+- Full calendar with cycle tracking
+- Profile settings and preferences
+- Push notifications
+- Apple Health integration
+- Subscription/payments (StoreKit 2)
+
+---
+
+## Quick Reference
+
+### Live URLs
+| Service | URL |
+|---------|-----|
+| API Health | https://strength-gace-flow-production.up.railway.app/api/health |
+| API Docs | https://strength-gace-flow-production.up.railway.app/docs |
+| Firebase Console | https://console.firebase.google.com (project: strength-grace-flow) |
+| Railway Dashboard | https://railway.app |
+| App Store Connect | https://appstoreconnect.apple.com |
+
+### API Endpoints
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | /api/health | Health check |
+| GET | /api/v1/users/me | Get user profile |
+| POST | /api/v1/users/me | Create profile |
+| PATCH | /api/v1/users/me | Update profile |
+| DELETE | /api/v1/users/me | Delete user |
+| GET | /api/v1/cycle/current | Current phase |
+| POST | /api/v1/cycle/log-period | Log period |
+| GET | /api/v1/cycle/history | Cycle history |
+| GET | /api/v1/cycle/predictions | Predictions |
+| GET | /api/v1/workouts | List workouts |
+| GET | /api/v1/workouts/{id} | Workout detail |
+| GET | /api/v1/workouts/recommended | Phase recommendations |
+| POST | /api/v1/workouts/history | Log completion |
+| GET | /api/v1/recommendations/today | AI recommendations |
+
+### Environment Variables (Railway)
+- `FIREBASE_SERVICE_ACCOUNT_JSON` - ✅ Configured
+- `ANTHROPIC_API_KEY` - ✅ Configured
+- `PORT` - Auto-set by Railway
+
+### Project Structure
+```
+strength-grace-flow/
+├── backend/                    # FastAPI backend
+│   ├── app/
+│   │   ├── ai/prompts/        # AI prompt templates
+│   │   ├── config/            # Settings, Firebase
+│   │   ├── middleware/        # Auth
+│   │   ├── models/            # Pydantic models
+│   │   ├── routers/           # API endpoints
+│   │   ├── services/          # Business logic
+│   │   └── utils/             # Cycle calculations
+│   ├── Dockerfile
+│   └── requirements.txt
+├── StrengthGraceFlow/          # iOS app
+│   └── StrengthGraceFlow/
+│       ├── Core/Theme/        # Design system
+│       ├── Features/
+│       │   ├── Auth/          # Sign in/up
+│       │   ├── Onboarding/    # Setup flow
+│       │   ├── Today/         # Main tab
+│       │   └── Workouts/      # Workout library
+│       ├── Services/          # API, Auth
+│       └── Assets.xcassets/   # App icon
+├── docs/
+│   ├── devlog.md              # This file
+│   └── cli-setup.md           # Firebase/Railway CLI
+└── *.md                       # Architecture docs
+```
 
 ---
 
 ## Progress Timeline
 
-### 2025-12-21 — Phase 4: AI Recommendations (Basic)
+### 2025-12-21 — Full MVP Development Day
 
-**What was done:**
-- Added basic AI recommendation endpoint using Claude API
-- Created prompt templates for cycle-aware recommendations
-- Fallback content when API key not configured
+**Session Summary:**
+Single-day sprint completing Phases 0-4 of the MVP.
 
-**Files created:**
-- `backend/app/ai/prompts/daily_recommendation.py` — Prompt templates
-- `backend/app/services/recommendation_service.py` — Claude API integration
-- `backend/app/routers/recommendations.py` — Recommendation endpoints
+**Accomplishments:**
+- Set up complete infrastructure (Firebase, Railway, Xcode)
+- Built full FastAPI backend with auth and all endpoints
+- Created SwiftUI iOS app with auth, onboarding, and main UI
+- Added 12 placeholder workouts with filtering
+- Integrated Claude API for recommendations
+- Tested app on physical iPhone device
+- Prepared app icon for TestFlight
 
-**API Endpoint:**
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | /api/v1/recommendations/today | AI-powered daily recommendations |
+**Issues Resolved:**
+- Railway PORT configuration (use $PORT env var)
+- Firebase Auth not enabled (enabled Email/Password)
+- Developer Mode on iPhone (enabled in Privacy & Security)
+- Untrusted Developer (trusted in VPN & Device Management)
 
-**Note:** AI recommendations are intentionally basic for MVP. Future enhancements planned:
-- More personalized prompts based on workout history
-- Integration with Apple Health data
-- Mood/energy input from user
-- Progressive difficulty suggestions
-
----
-
-### 2025-12-21 — Phase 3: Workout Library
-
-**What was done:**
-- Added 12 placeholder workouts across all categories
-- Created workout list, detail, and completion views
-- Workouts tagged by cycle phase and intensity
-
-**Backend:**
-- `backend/app/models/workout.py` — Workout models
-- `backend/app/services/workout_service.py` — Workout service with placeholders
-- `backend/app/routers/workouts.py` — Workout endpoints
-
-**iOS:**
-- `WorkoutListView.swift` — Grid with phase/category filters
-- `WorkoutDetailView.swift` — Detail with video placeholder
-- Workout completion flow with rating
-
-**Categories:** Yoga, Pilates, Strength, HIIT, Cardio, Barre, Dance, Stretching
-
----
-
-### 2025-12-21 — Phase 2: iOS App Foundation
-
-**What was done:**
-- Created complete SwiftUI app structure
-- Firebase Auth integration (sign up, sign in, sign out)
-- 4-step onboarding flow
-- Main tab navigation with Today view
-
-**iOS Files:**
-- `Core/Theme/SGFTheme.swift` — Design system (colors, typography, spacing)
-- `Services/AuthService.swift` — Firebase Auth wrapper
-- `Services/APIService.swift` — Backend API client
-- `Features/Auth/*` — Welcome, SignIn, SignUp views
-- `Features/Onboarding/*` — Name, goals, level, cycle setup
-- `Features/Today/*` — Today view with cycle phase card
-- `RootView.swift` — Auth-based navigation
-
----
-
-### 2025-12-21 — Phase 1 Complete: Backend Foundation
-
-**What was done:**
-- Implemented complete backend with Firebase Auth integration
-- Created all Phase 1 API endpoints, deployed to Railway
-- Auth middleware protecting all user/cycle endpoints
-
-**Files created:**
-- `backend/app/config/settings.py` — Pydantic settings management
-- `backend/app/config/firebase.py` — Firebase Admin SDK init & token verification
-- `backend/app/middleware/auth.py` — JWT auth middleware with CurrentUser dependency
-- `backend/app/models/user.py` — User Pydantic models (FitnessLevel, FitnessGoal enums)
-- `backend/app/models/cycle.py` — Cycle models (CyclePhase, CycleInfo, predictions)
-- `backend/app/utils/cycle_calculations.py` — Core phase detection algorithm
-- `backend/app/services/user_service.py` — Firestore CRUD for user profiles
-- `backend/app/services/cycle_service.py` — Cycle tracking & predictions
-- `backend/app/routers/users.py` — User profile REST endpoints
-- `backend/app/routers/cycle.py` — Cycle tracking REST endpoints
-
-**API Endpoints (all protected):**
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | /api/v1/users/me | Get user profile |
-| POST | /api/v1/users/me | Create user profile |
-| PATCH | /api/v1/users/me | Update user profile |
-| DELETE | /api/v1/users/me | Delete user & data |
-| GET | /api/v1/cycle/current | Current phase info |
-| POST | /api/v1/cycle/log-period | Log period start |
-| GET | /api/v1/cycle/history | Cycle history |
-| GET | /api/v1/cycle/predictions | Future phase predictions |
-
-**Deployment verified:**
-- Health: `https://strength-gace-flow-production.up.railway.app/api/health`
-- Docs: `https://strength-gace-flow-production.up.railway.app/docs`
-
-**Next Steps:**
-- [ ] Add `FIREBASE_SERVICE_ACCOUNT_JSON` to Railway environment variables
-- [ ] Create Xcode project (Phase 0 remaining step)
-- [ ] Begin Phase 2: iOS app foundation
-
----
-
-### 2025-12-21 — Project Initialization
-
-**What was done:**
-- Created GitHub repo: `gusmar2017/strength-gace-flow`
-- Initialized local git repo and linked to remote
-- Set up `.claude/` directory with commands and settings
-- Created core documentation:
-  - `strength-grace-flow-architecture.md` — Full technical architecture
-  - `implementation-guide.md` — Phase-by-phase implementation plan
-  - `design-system.md` — UI/UX design tokens and patterns
-
-**Key Decisions:**
-- [x] Backend: **FastAPI (Python)** over Node.js/Express
-  - Rationale: Team preference, better async support, auto-generated API docs
-- [x] iOS: **SwiftUI** with native components
-  - Rationale: Modern, declarative, built-in accessibility
-- [x] Video hosting: **Vimeo** (Pro/Business)
-  - Rationale: Privacy controls, embeddable player, no YouTube branding
-
-**Next Steps:**
-- [ ] Phase 0: Set up Firebase project
-- [ ] Phase 0: Set up Railway project
-- [x] Phase 0: Create initial backend project structure
-- [ ] Phase 0: Create initial iOS project in Xcode
-
-### 2025-12-21 — Backend Structure & Planning
-
-**What was done:**
-- Completed implementation planning session
-- Created backend project structure with FastAPI
-- Set up Docker and Railway configuration
-- Created health check endpoint
-
-**Backend files created:**
-- `backend/app/main.py` — FastAPI entry point
-- `backend/app/routers/health.py` — Health check endpoint
-- `backend/requirements.txt` — Python dependencies
-- `backend/Dockerfile` — Container configuration
-- `backend/railway.toml` — Railway deployment config
-- `backend/.env.example` — Environment template
-
-**Key Decisions:**
-- [x] Defer Vimeo setup — Use placeholder videos initially
-- [x] Learn iOS as we build — No separate tutorial phase
-- [x] Apple Developer already enrolled — No wait time needed
-
-**Pending (requires browser):**
-- [ ] Create Firebase project at console.firebase.google.com
-- [ ] Create Railway project at railway.app
-- [ ] Create Xcode project (requires Xcode GUI)
+**Stopping Point:**
+Ready for TestFlight upload. Next session: App Store Connect setup and archive upload.
 
 ---
 
 ## Decision Log
 
-| Date | Decision | Rationale | Alternatives Considered |
-|------|----------|-----------|------------------------|
-| 2025-12-21 | Use FastAPI for backend | Python ecosystem, auto docs, async support | Node.js/Express |
-| 2025-12-21 | Native SwiftUI components | Accessibility, performance, iOS-native feel | Custom UI components |
-| 2025-12-21 | Vimeo for video hosting | Privacy controls, clean player | YouTube, self-hosted |
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2025-12-21 | FastAPI backend | Python ecosystem, auto docs, team preference |
+| 2025-12-21 | SwiftUI native | Modern, accessible, iOS-native feel |
+| 2025-12-21 | Placeholder workouts | Ship MVP fast, add real content later |
+| 2025-12-21 | Basic AI recommendations | Intentionally simple for MVP, expand later |
+| 2025-12-21 | TestFlight before polish | Validate pipeline, get early feedback |
 
 ---
 
@@ -200,9 +233,8 @@ Strength Grace & Flow is a **cycle-synced fitness iOS app** for women. It recomm
 
 | File | Purpose |
 |------|---------|
-| `strength-grace-flow-architecture.md` | Technical architecture, data models, API design |
-| `implementation-guide.md` | Phase-by-phase implementation tasks |
-| `design-system.md` | Colors, typography, component patterns |
-| `docs/phases/` | Detailed logs per implementation phase |
+| `strength-grace-flow-architecture.md` | Technical architecture, data models |
+| `implementation-guide.md` | Phase-by-phase tasks |
+| `design-system.md` | Colors, typography, components |
 | `docs/devlog.md` | This file — progress summary |
-| `docs/cli-setup.md` | Firebase and Railway CLI setup guide |
+| `docs/cli-setup.md` | Firebase and Railway CLI guide |
