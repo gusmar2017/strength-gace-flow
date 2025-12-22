@@ -77,6 +77,12 @@ class APIService {
         return try await request(endpoint: "/api/v1/cycle/predictions?days=\(days)", method: "GET")
     }
 
+    // MARK: - Recommendations (Basic - will expand later)
+
+    func getTodayRecommendations() async throws -> DailyRecommendationResponse {
+        return try await request(endpoint: "/api/v1/recommendations/today", method: "GET")
+    }
+
     // MARK: - Generic Request
 
     private func request<T: Decodable>(
@@ -310,5 +316,35 @@ struct PhasePrediction: Codable {
         case date
         case phase
         case cycleDay = "cycle_day"
+    }
+}
+
+// MARK: - Recommendation Models (Basic - will expand later)
+
+struct DailyRecommendationResponse: Codable {
+    let dailyMessage: String
+    let recommendations: [WorkoutRecommendation]
+    let selfCareTip: String
+    let phase: String
+    let cycleDay: Int
+
+    enum CodingKeys: String, CodingKey {
+        case dailyMessage = "daily_message"
+        case recommendations
+        case selfCareTip = "self_care_tip"
+        case phase
+        case cycleDay = "cycle_day"
+    }
+}
+
+struct WorkoutRecommendation: Codable {
+    let workoutTitle: String
+    let workoutId: String?
+    let reason: String
+
+    enum CodingKeys: String, CodingKey {
+        case workoutTitle = "workout_title"
+        case workoutId = "workout_id"
+        case reason
     }
 }

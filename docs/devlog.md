@@ -4,9 +4,9 @@
 
 ## Current Status
 
-**Phase:** 1 - Backend Foundation (Complete)
+**Phase:** 4 - AI Recommendations (Basic)
 **Last Updated:** 2025-12-21
-**Status:** Phase 1 deployed to Railway
+**Status:** Phases 0-4 complete, ready for TestFlight prep
 
 ## Quick Context
 
@@ -25,6 +25,71 @@ Strength Grace & Flow is a **cycle-synced fitness iOS app** for women. It recomm
 ---
 
 ## Progress Timeline
+
+### 2025-12-21 — Phase 4: AI Recommendations (Basic)
+
+**What was done:**
+- Added basic AI recommendation endpoint using Claude API
+- Created prompt templates for cycle-aware recommendations
+- Fallback content when API key not configured
+
+**Files created:**
+- `backend/app/ai/prompts/daily_recommendation.py` — Prompt templates
+- `backend/app/services/recommendation_service.py` — Claude API integration
+- `backend/app/routers/recommendations.py` — Recommendation endpoints
+
+**API Endpoint:**
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | /api/v1/recommendations/today | AI-powered daily recommendations |
+
+**Note:** AI recommendations are intentionally basic for MVP. Future enhancements planned:
+- More personalized prompts based on workout history
+- Integration with Apple Health data
+- Mood/energy input from user
+- Progressive difficulty suggestions
+
+---
+
+### 2025-12-21 — Phase 3: Workout Library
+
+**What was done:**
+- Added 12 placeholder workouts across all categories
+- Created workout list, detail, and completion views
+- Workouts tagged by cycle phase and intensity
+
+**Backend:**
+- `backend/app/models/workout.py` — Workout models
+- `backend/app/services/workout_service.py` — Workout service with placeholders
+- `backend/app/routers/workouts.py` — Workout endpoints
+
+**iOS:**
+- `WorkoutListView.swift` — Grid with phase/category filters
+- `WorkoutDetailView.swift` — Detail with video placeholder
+- Workout completion flow with rating
+
+**Categories:** Yoga, Pilates, Strength, HIIT, Cardio, Barre, Dance, Stretching
+
+---
+
+### 2025-12-21 — Phase 2: iOS App Foundation
+
+**What was done:**
+- Created complete SwiftUI app structure
+- Firebase Auth integration (sign up, sign in, sign out)
+- 4-step onboarding flow
+- Main tab navigation with Today view
+
+**iOS Files:**
+- `Core/Theme/SGFTheme.swift` — Design system (colors, typography, spacing)
+- `Services/AuthService.swift` — Firebase Auth wrapper
+- `Services/APIService.swift` — Backend API client
+- `Features/Auth/*` — Welcome, SignIn, SignUp views
+- `Features/Onboarding/*` — Name, goals, level, cycle setup
+- `Features/Today/*` — Today view with cycle phase card
+- `RootView.swift` — Auth-based navigation
+
+---
 
 ### 2025-12-21 — Phase 1 Complete: Backend Foundation
 

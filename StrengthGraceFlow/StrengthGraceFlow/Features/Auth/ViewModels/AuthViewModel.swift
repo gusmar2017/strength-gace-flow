@@ -17,7 +17,7 @@ enum AuthState {
 
 @MainActor
 class AuthViewModel: ObservableObject {
-    @Published var authState: AuthState = .loading
+    @Published var authState: AuthState = .unauthenticated
     @Published var errorMessage: String?
     @Published var isLoading = false
 

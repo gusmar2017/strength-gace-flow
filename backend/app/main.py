@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config.firebase import initialize_firebase
 from app.config.settings import get_settings
-from app.routers import cycle, health, users, workouts
+from app.routers import cycle, health, recommendations, users, workouts
 
 
 @asynccontextmanager
@@ -53,6 +53,7 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(users.router)
 app.include_router(cycle.router)
 app.include_router(workouts.router)
+app.include_router(recommendations.router)
 
 
 @app.get("/")
@@ -67,5 +68,6 @@ async def root():
             "users": "/api/v1/users/me",
             "cycle": "/api/v1/cycle/current",
             "workouts": "/api/v1/workouts",
+            "recommendations": "/api/v1/recommendations/today",
         },
     }
