@@ -25,6 +25,10 @@ struct TodayView: View {
                         .padding(.horizontal, SGFSpacing.lg)
                     }
 
+                    // Energy tracking card
+                    EnergyTrackingCard(viewModel: viewModel)
+                        .padding(.horizontal, SGFSpacing.lg)
+
                     // Phase card
                     PhaseCard(phase: currentPhase, cycleDay: cycleDay)
                         .padding(.horizontal, SGFSpacing.lg)
@@ -430,6 +434,138 @@ struct PhaseTipsCard: View {
             RoundedRectangle(cornerRadius: SGFCornerRadius.md)
                 .fill(Color.sgfSurface)
         )
+    }
+}
+
+// MARK: - Energy Tracking Card
+
+struct EnergyTrackingCard: View {
+    @ObservedObject var viewModel: TodayViewModel
+    @State private var energyLevel: Double
+
+    init(viewModel: TodayViewModel) {
+        self.viewModel = viewModel
+        self._energyLevel = State(initialValue: Double(viewModel.todayEnergyLevel ?? 5))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: SGFSpacing.md) {
+            HStack {
+                Image(systemName: "bolt.heart.fill")
+                    .font(.title3)
+                    .foregroundColor(.sgfAccent)
+
+                Text("How's your energy today?")
+                    .font(.sgfHeadline)
+                    .foregroundColor(.sgfTextPrimary)
+
+                Spacer()
+
+                if viewModel.todayEnergyLevel != nil {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.sgfSuccess)
+                }
+            }
+
+            VStack(spacing: SGFSpacing.sm) {
+                // Large energy display
+                Text("\(Int(energyLevel))")
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .foregroundColor(energyColor)
+                    .frame(maxWidth: .infinity)
+
+                Text(energyDescription)
+                    .font(.sgfSubheadline)
+                    .foregroundColor(.sgfTextSecondary)
+
+                // Slider
+                Slider(
+                    value: $energyLevel,
+                    in: 1...10,
+                    step: 1
+                )
+                .tint(energyColor)
+                .padding(.horizontal, SGFSpacing.xs)
+
+                // Min and max labels
+                HStack {
+                    Text("Low")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextTertiary)
+
+                    Spacer()
+
+                    Text("High")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextTertiary)
+                }
+
+                // Save button
+                Button {
+                    Task {
+                        await viewModel.logEnergy(score: Int(energyLevel))
+                    }
+                } label: {
+                    HStack {
+                        if viewModel.isSavingEnergy {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text(viewModel.todayEnergyLevel == nil ? "Log Energy" : "Update")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .font(.sgfSubheadline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, SGFSpacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: SGFCornerRadius.sm)
+                            .fill(energyColor)
+                    )
+                }
+                .disabled(viewModel.isSavingEnergy)
+            }
+            .padding(.top, SGFSpacing.xs)
+        }
+        .padding(SGFSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                .fill(Color.sgfSurface)
+        )
+        .onChange(of: viewModel.todayEnergyLevel) { oldValue, newValue in
+            if let newValue = newValue {
+                energyLevel = Double(newValue)
+            }
+        }
+    }
+
+    var energyColor: Color {
+        switch Int(energyLevel) {
+        case 1...3:
+            return .sgfMenstrual
+        case 4...6:
+            return .sgfAccent
+        case 7...8:
+            return .sgfFollicular
+        default:
+            return .sgfOvulatory
+        }
+    }
+
+    var energyDescription: String {
+        switch Int(energyLevel) {
+        case 1...2:
+            return "Very low - rest and recover"
+        case 3...4:
+            return "Low - gentle movement only"
+        case 5...6:
+            return "Moderate - steady workout"
+        case 7...8:
+            return "Good - challenge yourself"
+        default:
+            return "Excellent - peak performance"
+        }
     }
 }
 

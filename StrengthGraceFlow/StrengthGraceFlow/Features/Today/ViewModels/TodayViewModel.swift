@@ -14,10 +14,13 @@ class TodayViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var shouldShowLogPeriodBanner = false
+    @Published var todayEnergyLevel: Int?
+    @Published var isSavingEnergy = false
 
     init() {
         Task {
             await loadCycleInfo()
+            await loadTodayEnergy()
         }
     }
 
@@ -59,5 +62,35 @@ class TodayViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    func loadTodayEnergy() async {
+        do {
+            let response = try await APIService.shared.getTodayEnergy()
+            todayEnergyLevel = response.energy.score
+        } catch APIError.notFound {
+            // No energy logged for today - that's okay
+            todayEnergyLevel = nil
+        } catch {
+            // Silently fail for energy loading - not critical
+            todayEnergyLevel = nil
+        }
+    }
+
+    func logEnergy(score: Int) async {
+        isSavingEnergy = true
+
+        do {
+            let response = try await APIService.shared.logEnergy(
+                date: Date(),
+                score: score,
+                notes: nil
+            )
+            todayEnergyLevel = response.energy.score
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isSavingEnergy = false
     }
 }

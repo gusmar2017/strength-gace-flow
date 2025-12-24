@@ -98,6 +98,21 @@ class APIService {
         return try await request(endpoint: "/api/v1/recommendations/today", method: "GET")
     }
 
+    // MARK: - Energy Tracking
+
+    func logEnergy(date: Date, score: Int, notes: String? = nil) async throws -> EnergyLogResponse {
+        let data = LogEnergyRequest(date: date, score: score, notes: notes)
+        return try await request(endpoint: "/api/v1/energy/log", method: "POST", body: data)
+    }
+
+    func getTodayEnergy() async throws -> EnergyLogResponse {
+        return try await request(endpoint: "/api/v1/energy/today", method: "GET")
+    }
+
+    func getEnergyHistory(days: Int = 30) async throws -> EnergyHistoryResponse {
+        return try await request(endpoint: "/api/v1/energy/history?days=\(days)", method: "GET")
+    }
+
     // MARK: - Generic Request
 
     private func request<T: Decodable>(
@@ -377,5 +392,49 @@ struct WorkoutRecommendation: Codable {
         case workoutTitle = "workout_title"
         case workoutId = "workout_id"
         case reason
+    }
+}
+
+// MARK: - Energy Tracking Models
+
+struct LogEnergyRequest: Codable {
+    let date: Date
+    let score: Int
+    let notes: String?
+}
+
+struct EnergyLog: Codable {
+    let id: String
+    let userId: String
+    let date: Date
+    let score: Int
+    let notes: String?
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case date
+        case score
+        case notes
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+struct EnergyLogResponse: Codable {
+    let energy: EnergyLog
+}
+
+struct EnergyHistoryResponse: Codable {
+    let entries: [EnergyLog]
+    let averageScore: Double
+    let totalLogs: Int
+
+    enum CodingKeys: String, CodingKey {
+        case entries
+        case averageScore = "average_score"
+        case totalLogs = "total_logs"
     }
 }
