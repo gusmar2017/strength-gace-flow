@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase:** 5 - TestFlight (Waiting for Apple Developer Program Approval)
-**Last Updated:** 2025-12-22
-**Status:** MVP feature-complete, waiting for Apple Developer Program approval before TestFlight upload
+**Last Updated:** 2025-12-24
+**Status:** Enhanced cycle tracking implemented, waiting for Apple Developer Program approval before TestFlight upload
 
 ---
 
@@ -46,6 +46,16 @@
 - [x] Cycle-aware prompts
 - [x] Fallback recommendations
 - [x] `/api/v1/recommendations/today` endpoint
+
+### ✅ Phase 4.5: Enhanced Cycle Tracking (Date-Based History)
+- [x] Date-based cycle tracking (replaces generic averages)
+- [x] Onboarding collects 1-3 historical cycle dates
+- [x] Backend stores full cycle history with automatic calibration
+- [x] Median-based calculations (robust to outliers)
+- [x] Smart period logging banner on Today view
+- [x] Cycle history management (view, delete, manual logging)
+- [x] PATCH/DELETE endpoints for cycle management
+- [x] Auto-recalculation of averages on data changes
 
 ### 🔄 Phase 5: TestFlight (Waiting for Apple Developer Approval)
 - [x] App icon ready
@@ -113,7 +123,7 @@
 - AI recommendations are basic (will expand later)
 - Calendar tab is placeholder
 - Profile tab is minimal (just sign out)
-- No onboarding data saved to backend yet
+- Cycle History view needs navigation integration (not added to main tabs yet)
 
 ### Post-TestFlight Polish (Future)
 - Real workout videos (Vimeo integration)
@@ -142,12 +152,14 @@
 |--------|------|---------|
 | GET | /api/health | Health check |
 | GET | /api/v1/users/me | Get user profile |
-| POST | /api/v1/users/me | Create profile |
+| POST | /api/v1/users/me | Create profile (with initial_cycle_dates) |
 | PATCH | /api/v1/users/me | Update profile |
 | DELETE | /api/v1/users/me | Delete user |
 | GET | /api/v1/cycle/current | Current phase |
 | POST | /api/v1/cycle/log-period | Log period |
 | GET | /api/v1/cycle/history | Cycle history |
+| PATCH | /api/v1/cycle/history/{id} | Update cycle entry |
+| DELETE | /api/v1/cycle/history/{id} | Delete cycle entry |
 | GET | /api/v1/cycle/predictions | Predictions |
 | GET | /api/v1/workouts | List workouts |
 | GET | /api/v1/workouts/{id} | Workout detail |
@@ -179,8 +191,12 @@ strength-grace-flow/
 │       ├── Core/Theme/        # Design system
 │       ├── Features/
 │       │   ├── Auth/          # Sign in/up
-│       │   ├── Onboarding/    # Setup flow
-│       │   ├── Today/         # Main tab
+│       │   ├── Onboarding/    # Setup flow (with date pickers)
+│       │   ├── Today/         # Main tab (with period logging)
+│       │   │   └── ViewModels/ # TodayViewModel
+│       │   ├── Cycle/         # Cycle history management
+│       │   │   ├── Views/     # CycleHistoryView
+│       │   │   └── ViewModels/ # CycleHistoryViewModel
 │       │   └── Workouts/      # Workout library
 │       ├── Services/          # API, Auth
 │       └── Assets.xcassets/   # App icon
@@ -229,6 +245,67 @@ Started TestFlight upload process, discovered need for Apple Developer Program m
 **Stopping Point:**
 Waiting for Apple Developer Program approval (typically 24-48 hours). Once approved, will proceed with App Store Connect setup and Xcode archive upload.
 
+### 2025-12-24 — Enhanced Cycle Tracking Implementation
+
+**Session Summary:**
+Major upgrade to cycle tracking system, transforming from generic averages to date-based history with full CRUD management.
+
+**Accomplishments:**
+
+*Backend (Python/FastAPI):*
+- Added `UpdateCycleRequest` model for editing cycle entries
+- Added `initial_cycle_dates` field to `UserCreate` for onboarding (accepts 1-3 dates)
+- Implemented median-based average calculation (more robust to outliers than mean)
+- Created `initialize_cycle_tracking()` to create cycle entries from onboarding dates
+- Created `recalculate_and_update_averages()` for automatic recalculation
+- Created `update_cycle_entry()` for editing existing cycles
+- Created `delete_cycle_entry()` with validation (can't delete last cycle)
+- Updated `create_user_profile()` to initialize cycle tracking on onboarding
+- Added PATCH `/api/v1/cycle/history/{id}` endpoint
+- Added DELETE `/api/v1/cycle/history/{id}` endpoint
+
+*iOS (SwiftUI):*
+- Redesigned `OnboardingCycleView` with date pickers (replaces +/- buttons)
+  - Users can add 1-3 cycle dates or skip
+  - Dates displayed in list with remove functionality
+- Implemented `completeOnboarding()` with full backend integration
+- Updated `APIService` with all necessary methods and models
+- Created `TodayViewModel` for cycle data and period logging
+- Added `LogPeriodBanner` to Today view (appears when appropriate)
+- Added `LogPeriodSheet` for quick period logging with date picker
+- Created `CycleHistoryView` with stats, list, edit, and delete
+- Created `CycleHistoryViewModel` for history data management
+
+**Key Features:**
+- Onboarding collects actual cycle dates instead of generic numbers
+- Backend automatically calculates average from historical data
+- Smart banner on Today view prompts logging when cycle day > 20
+- Full cycle history management with delete capability
+- Median calculation prevents outliers from skewing averages
+- Automatic recalculation when data changes
+
+**Technical Decisions:**
+- Median > Mean: More robust to irregular cycles (stress, travel, etc.)
+- Skip option in onboarding: Don't force data entry, encourage later
+- Banner logic: Show when late in cycle OR no data exists
+- Delete validation: Prevent deleting last cycle (need at least one)
+
+**Files Modified/Created:**
+- Backend: 6 files modified (models, services, routers, utils)
+- iOS: 3 files modified, 3 new files created
+- 14 files total, +1014 lines, -127 lines
+
+**Testing Status:**
+- ⏳ End-to-end testing pending (backend not yet deployed)
+- ⏳ Navigation to Cycle History not yet added (view exists, needs routing)
+
+**Stopping Point:**
+Core cycle tracking feature complete and committed. Ready for:
+1. Backend deployment to Railway
+2. Navigation integration for Cycle History view
+3. End-to-end testing with live backend
+4. Apple Developer Program approval for TestFlight
+
 ---
 
 ## Decision Log
@@ -240,6 +317,8 @@ Waiting for Apple Developer Program approval (typically 24-48 hours). Once appro
 | 2025-12-21 | Placeholder workouts | Ship MVP fast, add real content later |
 | 2025-12-21 | Basic AI recommendations | Intentionally simple for MVP, expand later |
 | 2025-12-21 | TestFlight before polish | Validate pipeline, get early feedback |
+| 2025-12-24 | Date-based cycle tracking | Better accuracy than averages, enables future features |
+| 2025-12-24 | Median over mean | Robust to irregular cycles, better UX |
 
 ---
 
