@@ -4,9 +4,9 @@
 
 ## Current Status
 
-**Phase:** 5 - TestFlight (Waiting for Apple Developer Program Approval)
+**Phase:** 5 - TestFlight (Ready for Upload)
 **Last Updated:** 2025-12-24
-**Status:** Enhanced cycle tracking implemented, waiting for Apple Developer Program approval before TestFlight upload
+**Status:** All features merged to main, backend deployed, ready for TestFlight upload once Apple Developer Program is approved
 
 ---
 
@@ -295,16 +295,31 @@ Major upgrade to cycle tracking system, transforming from generic averages to da
 - iOS: 3 files modified, 3 new files created
 - 14 files total, +1014 lines, -127 lines
 
-**Testing Status:**
-- ⏳ End-to-end testing pending (backend not yet deployed)
-- ⏳ Navigation to Cycle History not yet added (view exists, needs routing)
+**Stopping Point:**
+Core cycle tracking feature complete and committed. Pending deployment and navigation integration.
+
+### 2025-12-24 (Later) — Deployment and Merge to Main
+
+**Session Summary:**
+Completed navigation integration, deployed backend to Railway, and merged all MVP features to main branch.
+
+**Accomplishments:**
+- Integrated Cycle History navigation into Calendar tab (replaced placeholder)
+- Merged `feature/mvp-implementation` branch to `main` (6 commits, 18 files changed)
+- Pushed to GitHub, triggering Railway auto-deployment
+- Verified all new cycle endpoints deployed successfully:
+  - GET `/api/v1/cycle/history` - List cycle history
+  - PATCH `/api/v1/cycle/history/{id}` - Update cycle entry
+  - DELETE `/api/v1/cycle/history/{id}` - Delete cycle entry
+
+**Technical Details:**
+- MainTabView Calendar tab now shows CycleHistoryView
+- Users can access full cycle tracking from main navigation
+- Backend auto-deployed via Railway GitHub integration
+- All API endpoints verified via OpenAPI spec
 
 **Stopping Point:**
-Core cycle tracking feature complete and committed. Ready for:
-1. Backend deployment to Railway
-2. Navigation integration for Cycle History view
-3. End-to-end testing with live backend
-4. Apple Developer Program approval for TestFlight
+✅ All MVP features complete and deployed! Ready for TestFlight upload once Apple Developer Program is approved.
 
 ---
 
