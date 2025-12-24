@@ -24,9 +24,9 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
-            CalendarPlaceholderView()
+            CycleHistoryView()
                 .tabItem {
-                    Label("Calendar", systemImage: "calendar")
+                    Label("Cycle", systemImage: "calendar")
                 }
                 .tag(2)
 
