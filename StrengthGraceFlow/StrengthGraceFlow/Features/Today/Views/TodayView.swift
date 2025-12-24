@@ -556,15 +556,15 @@ struct EnergyTrackingCard: View {
     var energyDescription: String {
         switch Int(energyLevel) {
         case 1...2:
-            return "Very low - rest and recover"
+            return "Honor your need for rest today"
         case 3...4:
-            return "Low - gentle movement only"
+            return "Gentle movement feels right"
         case 5...6:
-            return "Moderate - steady workout"
+            return "Ready for mindful movement"
         case 7...8:
-            return "Good - challenge yourself"
+            return "Feeling strong and energized"
         default:
-            return "Excellent - peak performance"
+            return "Ready to shine"
         }
     }
 }
