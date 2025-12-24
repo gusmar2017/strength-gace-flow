@@ -6,10 +6,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from app.middleware.auth import CurrentUser
 from app.models.cycle import (
+    CycleData,
     CycleHistoryResponse,
     CycleInfoResponse,
     CyclePredictionsResponse,
     LogPeriodRequest,
+    UpdateCycleRequest,
 )
 from app.services import cycle_service
 
@@ -123,3 +125,45 @@ async def get_cycle_predictions(
         predictions=predictions,
         next_period_start=next_period,
     )
+
+
+@router.patch("/history/{cycle_id}", response_model=CycleData)
+async def update_cycle_entry(
+    user: CurrentUser,
+    cycle_id: str,
+    data: UpdateCycleRequest,
+):
+    """
+    Update a cycle entry (change start date, add period end date, edit notes).
+
+    Automatically recalculates averages after update.
+    """
+    updated_cycle = await cycle_service.update_cycle_entry(user.uid, cycle_id, data)
+
+    if updated_cycle is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cycle entry not found",
+        )
+
+    return updated_cycle
+
+
+@router.delete("/history/{cycle_id}", status_code=status.HTTP_200_OK)
+async def delete_cycle_entry(
+    user: CurrentUser,
+    cycle_id: str,
+):
+    """
+    Delete a cycle entry from history.
+
+    Cannot delete if it's the only cycle. Recalculates averages after deletion.
+    """
+    try:
+        await cycle_service.delete_cycle_entry(user.uid, cycle_id)
+        return {"message": "Cycle deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )

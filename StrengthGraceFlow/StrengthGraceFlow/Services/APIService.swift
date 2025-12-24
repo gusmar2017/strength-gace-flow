@@ -77,6 +77,21 @@ class APIService {
         return try await request(endpoint: "/api/v1/cycle/predictions?days=\(days)", method: "GET")
     }
 
+    func updateCycleEntry(cycleId: String, data: UpdateCycleEntryRequest) async throws -> CycleData {
+        return try await request(
+            endpoint: "/api/v1/cycle/history/\(cycleId)",
+            method: "PATCH",
+            body: data
+        )
+    }
+
+    func deleteCycleEntry(cycleId: String) async throws {
+        let _: EmptyResponse = try await request(
+            endpoint: "/api/v1/cycle/history/\(cycleId)",
+            method: "DELETE"
+        )
+    }
+
     // MARK: - Recommendations (Basic - will expand later)
 
     func getTodayRecommendations() async throws -> DailyRecommendationResponse {
@@ -149,6 +164,7 @@ struct CreateUserRequest: Codable {
     let averagePeriodLength: Int
     let cycleTrackingEnabled: Bool
     let notificationsEnabled: Bool
+    let initialCycleDates: [Date]?
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
@@ -158,6 +174,7 @@ struct CreateUserRequest: Codable {
         case averagePeriodLength = "average_period_length"
         case cycleTrackingEnabled = "cycle_tracking_enabled"
         case notificationsEnabled = "notifications_enabled"
+        case initialCycleDates = "initial_cycle_dates"
     }
 }
 
@@ -192,6 +209,20 @@ struct LogPeriodRequest: Codable {
         case notes
     }
 }
+
+struct UpdateCycleEntryRequest: Codable {
+    var startDate: Date?
+    var periodEndDate: Date?
+    var notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case startDate = "start_date"
+        case periodEndDate = "period_end_date"
+        case notes
+    }
+}
+
+struct EmptyResponse: Codable {}
 
 // MARK: - Response Models
 

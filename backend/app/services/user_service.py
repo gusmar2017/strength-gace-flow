@@ -118,6 +118,11 @@ async def create_user_profile(
 
     db.collection("users").document(user_id).set(profile_data)
 
+    # Initialize cycle tracking with historical dates if provided
+    if data.initial_cycle_dates:
+        from app.services import cycle_service
+        await cycle_service.initialize_cycle_tracking(user_id, data.initial_cycle_dates)
+
     return UserProfile(
         id=user_id,
         email=email,

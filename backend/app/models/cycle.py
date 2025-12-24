@@ -79,6 +79,13 @@ class LogPeriodRequest(BaseModel):
     notes: Optional[str] = None
 
 
+class UpdateCycleRequest(BaseModel):
+    """Request to update a cycle entry."""
+    start_date: Optional[date] = None
+    period_end_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
 class CycleData(BaseModel):
     """Historical cycle data."""
     id: str

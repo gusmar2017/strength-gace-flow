@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct TodayView: View {
+    @StateObject private var viewModel = TodayViewModel()
+    @State private var showingLogPeriod = false
     @State private var currentPhase: CyclePhase = .follicular
     @State private var cycleDay = 8
 
@@ -15,6 +17,14 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: SGFSpacing.lg) {
+                    // Log period banner (show if needed)
+                    if viewModel.shouldShowLogPeriodBanner {
+                        LogPeriodBanner {
+                            showingLogPeriod = true
+                        }
+                        .padding(.horizontal, SGFSpacing.lg)
+                    }
+
                     // Phase card
                     PhaseCard(phase: currentPhase, cycleDay: cycleDay)
                         .padding(.horizontal, SGFSpacing.lg)
@@ -35,6 +45,95 @@ struct TodayView: View {
             }
             .background(Color.sgfBackground)
             .navigationTitle("Today")
+            .sheet(isPresented: $showingLogPeriod) {
+                LogPeriodSheet(viewModel: viewModel)
+            }
+        }
+    }
+}
+
+// MARK: - Log Period Banner
+
+struct LogPeriodBanner: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: SGFSpacing.md) {
+                Image(systemName: "drop.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.sgfMenstrual)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Did your period start?")
+                        .font(.sgfSubheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.sgfTextPrimary)
+
+                    Text("Tap to log for better predictions")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.sgfTextTertiary)
+            }
+            .padding(SGFSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                    .fill(Color.sgfMenstrual.opacity(0.1))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                    .stroke(Color.sgfMenstrual.opacity(0.3), lineWidth: 1)
+            )
+        }
+    }
+}
+
+// MARK: - Log Period Sheet
+
+struct LogPeriodSheet: View {
+    @ObservedObject var viewModel: TodayViewModel
+    @Environment(\.dismiss) var dismiss
+    @State private var selectedDate = Date()
+    @State private var notes = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    DatePicker(
+                        "Start Date",
+                        selection: $selectedDate,
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                }
+
+                Section("Notes (Optional)") {
+                    TextEditor(text: $notes)
+                        .frame(height: 100)
+                }
+            }
+            .navigationTitle("Log Period Start")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await viewModel.logPeriod(date: selectedDate, notes: notes)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
         }
     }
 }

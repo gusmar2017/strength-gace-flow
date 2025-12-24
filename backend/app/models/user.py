@@ -2,7 +2,7 @@
 User models for API requests and responses.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
@@ -48,7 +48,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """Fields for creating a new user profile."""
-    pass
+    initial_cycle_dates: Optional[list[date]] = None
 
 
 class UserUpdate(BaseModel):

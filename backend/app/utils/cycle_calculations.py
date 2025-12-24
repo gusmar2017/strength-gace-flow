@@ -7,6 +7,7 @@ menstrual cycle phase based on the last period start date and cycle length.
 
 from datetime import date, timedelta
 from typing import Literal, Optional
+import statistics
 
 from app.models.cycle import CycleInfo, CyclePhase, PhasePrediction
 
@@ -162,3 +163,68 @@ def estimate_next_period(
         next_period += timedelta(days=average_cycle_length)
 
     return next_period
+
+
+def calculate_median(values: list[int]) -> int:
+    """
+    Calculate the median of a list of integers.
+
+    Median is more robust to outliers than mean for cycle length calculations.
+    For example: [27, 28, 28, 45, 28] -> median=28, mean=31.2
+
+    Args:
+        values: List of integer values
+
+    Returns:
+        Median value as an integer
+    """
+    if not values:
+        return 28  # default
+
+    return round(statistics.median(values))
+
+
+def calculate_confidence_from_history(
+    cycles_count: int,
+    cycle_lengths: list[int],
+    days_since_last_log: int,
+) -> Literal["high", "medium", "low"]:
+    """
+    Calculate confidence level based on historical data quality.
+
+    Args:
+        cycles_count: Number of complete cycles logged
+        cycle_lengths: List of cycle lengths in days
+        days_since_last_log: Days since last period was logged
+
+    Returns:
+        Confidence level: "high", "medium", or "low"
+
+    Confidence criteria:
+        High: 3+ cycles, consistent lengths (stdev < 3 days), recent data (< 35 days)
+        Medium: 2+ cycles OR recent data (< 70 days)
+        Low: 1 cycle OR old data OR irregular cycles
+    """
+    # Insufficient data
+    if cycles_count < 1:
+        return "low"
+
+    # Calculate variability if we have multiple cycles
+    is_consistent = True
+    if len(cycle_lengths) >= 2:
+        std_dev = statistics.stdev(cycle_lengths)
+        is_consistent = std_dev < 3
+
+    # Calculate average cycle for recency check
+    avg_cycle = calculate_median(cycle_lengths) if cycle_lengths else 28
+
+    # High confidence: good data volume, consistency, and recency
+    if cycles_count >= 3 and is_consistent and days_since_last_log < avg_cycle * 1.2:
+        return "high"
+
+    # Medium confidence: decent data or recent
+    if cycles_count >= 2 or days_since_last_log < avg_cycle * 2.5:
+        return "medium"
+
+    # Low confidence: sparse or old data
+    return "low"

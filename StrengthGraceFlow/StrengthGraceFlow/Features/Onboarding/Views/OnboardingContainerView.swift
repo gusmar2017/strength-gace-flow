@@ -14,8 +14,7 @@ struct OnboardingContainerView: View {
     @State private var displayName = ""
     @State private var selectedGoals: Set<FitnessGoal> = []
     @State private var selectedLevel: FitnessLevel?
-    @State private var averageCycleLength = 28
-    @State private var averagePeriodLength = 5
+    @State private var cycleDates: [Date] = []
 
     let totalSteps = 4
 
@@ -42,8 +41,7 @@ struct OnboardingContainerView: View {
                         .tag(2)
 
                     OnboardingCycleView(
-                        cycleLength: $averageCycleLength,
-                        periodLength: $averagePeriodLength,
+                        cycleDates: $cycleDates,
                         onComplete: completeOnboarding
                     )
                     .tag(3)
@@ -61,8 +59,63 @@ struct OnboardingContainerView: View {
     }
 
     private func completeOnboarding() {
-        // TODO: Save profile to backend
-        authViewModel.completeOnboarding()
+        Task {
+            do {
+                // Calculate averages from dates if provided
+                let (avgCycle, avgPeriod) = calculateAveragesFromDates(cycleDates)
+
+                // Map FitnessGoal to backend format
+                let goalStrings = selectedGoals.map { goal in
+                    switch goal {
+                    case .strength: return "build_strength"
+                    case .flexibility: return "improve_flexibility"
+                    case .energy: return "hormone_balance"
+                    case .stress: return "reduce_stress"
+                    case .weight: return "consistency"
+                    case .endurance: return "build_strength"
+                    }
+                }
+
+                // Create user profile with initial cycle dates
+                let request = CreateUserRequest(
+                    displayName: displayName,
+                    fitnessLevel: selectedLevel?.rawValue.lowercased(),
+                    goals: goalStrings,
+                    averageCycleLength: avgCycle,
+                    averagePeriodLength: avgPeriod,
+                    cycleTrackingEnabled: true,
+                    notificationsEnabled: true,
+                    initialCycleDates: cycleDates.isEmpty ? nil : cycleDates.sorted()
+                )
+
+                _ = try await APIService.shared.createUserProfile(data: request)
+
+                // Complete onboarding in auth view model
+                await MainActor.run {
+                    authViewModel.completeOnboarding()
+                }
+            } catch {
+                print("Error completing onboarding: \(error)")
+                // TODO: Show error to user
+            }
+        }
+    }
+
+    private func calculateAveragesFromDates(_ dates: [Date]) -> (cycle: Int, period: Int) {
+        guard dates.count >= 2 else {
+            return (28, 5) // defaults
+        }
+
+        let sorted = dates.sorted()
+        var cycleLengths: [Int] = []
+
+        for i in 0..<(sorted.count - 1) {
+            let days = Calendar.current.dateComponents([.day], from: sorted[i], to: sorted[i+1]).day ?? 0
+            cycleLengths.append(days)
+        }
+
+        let avgCycle = cycleLengths.isEmpty ? 28 : cycleLengths.reduce(0, +) / cycleLengths.count
+        return (avgCycle, 5) // period length still default for now
     }
 }
 
@@ -335,110 +388,143 @@ struct LevelCard: View {
 // MARK: - Onboarding Cycle View
 
 struct OnboardingCycleView: View {
-    @Binding var cycleLength: Int
-    @Binding var periodLength: Int
+    @Binding var cycleDates: [Date]
     let onComplete: () -> Void
+
+    @State private var showingDatePicker = false
+    @State private var selectedDate = Date()
 
     var body: some View {
         VStack(spacing: SGFSpacing.xl) {
             VStack(spacing: SGFSpacing.md) {
-                Text("Tell us about your cycle")
+                Text("When did your last few periods start?")
                     .font(.sgfTitle)
                     .foregroundColor(.sgfTextPrimary)
+                    .multilineTextAlignment(.center)
 
-                Text("This helps us recommend the right workouts")
+                Text("Add 1-3 recent start dates for better predictions")
                     .font(.sgfBody)
                     .foregroundColor(.sgfTextSecondary)
                     .multilineTextAlignment(.center)
             }
             .padding(.top, SGFSpacing.xl)
 
-            VStack(spacing: SGFSpacing.lg) {
-                // Cycle length
-                VStack(spacing: SGFSpacing.sm) {
-                    Text("Average cycle length")
-                        .font(.sgfSubheadline)
-                        .foregroundColor(.sgfTextSecondary)
-
+            // Date list
+            VStack(spacing: SGFSpacing.sm) {
+                ForEach(cycleDates.sorted(by: >), id: \.self) { date in
                     HStack {
-                        Button {
-                            if cycleLength > 21 { cycleLength -= 1 }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.title)
-                                .foregroundColor(.sgfPrimary)
-                        }
-
-                        Text("\(cycleLength) days")
-                            .font(.sgfTitle2)
+                        Image(systemName: "calendar")
+                            .foregroundColor(.sgfPrimary)
+                        Text(date, style: .date)
+                            .font(.sgfBody)
                             .foregroundColor(.sgfTextPrimary)
-                            .frame(width: 100)
-
+                        Spacer()
                         Button {
-                            if cycleLength < 35 { cycleLength += 1 }
+                            cycleDates.removeAll { $0 == date }
                         } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title)
-                                .foregroundColor(.sgfPrimary)
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.sgfTextTertiary)
                         }
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                            .fill(Color.sgfSurface)
+                    )
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                        .fill(Color.sgfSurface)
-                )
 
-                // Period length
-                VStack(spacing: SGFSpacing.sm) {
-                    Text("Average period length")
-                        .font(.sgfSubheadline)
-                        .foregroundColor(.sgfTextSecondary)
-
-                    HStack {
-                        Button {
-                            if periodLength > 3 { periodLength -= 1 }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.title)
-                                .foregroundColor(.sgfSecondary)
-                        }
-
-                        Text("\(periodLength) days")
-                            .font(.sgfTitle2)
-                            .foregroundColor(.sgfTextPrimary)
-                            .frame(width: 100)
-
-                        Button {
-                            if periodLength < 7 { periodLength += 1 }
-                        } label: {
+                // Add date button
+                if cycleDates.count < 3 {
+                    Button {
+                        showingDatePicker = true
+                    } label: {
+                        HStack {
                             Image(systemName: "plus.circle.fill")
-                                .font(.title)
-                                .foregroundColor(.sgfSecondary)
+                                .foregroundColor(.sgfPrimary)
+                            Text("Add period start date")
+                                .font(.sgfBody)
+                                .foregroundColor(.sgfPrimary)
                         }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                                .stroke(Color.sgfPrimary, style: StrokeStyle(lineWidth: 2, dash: [5]))
+                        )
                     }
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                        .fill(Color.sgfSurface)
-                )
             }
             .padding(.horizontal, SGFSpacing.lg)
 
-            Text("Don't worry, you can update this later")
-                .font(.sgfCaption)
-                .foregroundColor(.sgfTextTertiary)
+            if cycleDates.isEmpty {
+                VStack(spacing: SGFSpacing.sm) {
+                    Text("Don't remember exact dates?")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextTertiary)
+                    Text("You can skip this and log your next period when it starts")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextTertiary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, SGFSpacing.xl)
+            }
 
             Spacer()
 
-            Button("Start My Journey") {
+            Button(cycleDates.isEmpty ? "Skip for Now" : "Continue") {
                 onComplete()
             }
             .buttonStyle(SGFPrimaryButtonStyle())
             .padding(.horizontal, SGFSpacing.lg)
             .padding(.bottom, SGFSpacing.xl)
         }
+        .sheet(isPresented: $showingDatePicker) {
+            DatePickerSheet(selectedDate: $selectedDate) { date in
+                if !cycleDates.contains(date) && cycleDates.count < 3 {
+                    cycleDates.append(date)
+                }
+                showingDatePicker = false
+            }
+        }
+    }
+}
+
+// MARK: - Date Picker Sheet
+
+struct DatePickerSheet: View {
+    @Binding var selectedDate: Date
+    let onSave: (Date) -> Void
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                DatePicker(
+                    "Period Start Date",
+                    selection: $selectedDate,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .padding()
+
+                Spacer()
+            }
+            .navigationTitle("Add Start Date")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        onSave(selectedDate)
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 
