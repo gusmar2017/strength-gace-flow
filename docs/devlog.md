@@ -321,6 +321,71 @@ Completed navigation integration, deployed backend to Railway, and merged all MV
 **Stopping Point:**
 ✅ All MVP features complete and deployed! Ready for TestFlight upload once Apple Developer Program is approved.
 
+### 2025-12-29 — Voice Alignment & Design System Rebrand
+
+**Session Summary:**
+Major brand refresh with new logo, updated color palette, and comprehensive voice alignment across all user-facing copy. Added developer tools for rapid onboarding testing.
+
+**Accomplishments:**
+
+*Voice & UX Writing:*
+- Created user persona documentation (women 22-45, wellness-focused)
+- Created voice guidelines with "wise friend" tone
+- Updated all period-tracking language to be softer and more reflective
+  - "Did your period start?" → "Is today day 1 of your cycle?"
+  - "Log Period Start" → "Day 1"
+- Softened phase descriptions and energy levels
+- Updated error messages to be gentler across auth, onboarding, and cycle tracking
+- Used 3 parallel agents to implement changes efficiently
+
+*Design System Rebrand:*
+- Updated brand color palette to align with new logo:
+  - Primary: Deep Terracotta (#B35C44) - was Muted Sage (#8FAEA3)
+  - Secondary: Dusty Blue (#6F8F9B) - new
+  - Tertiary: Soft Clay Neutral (#D8B8A6) - was Warm Clay (#C7A89A)
+- Updated all cycle phase colors to match new palette
+- Updated extended palette (light/dark variants, hover states)
+- Created rebrand summary documentation
+- Fixed Firebase bundle ID mismatch (com.strengthgraceflow.StrengthGraceFlow → com.strengthgraceflow.app)
+
+*App Icon:*
+- Cropped new logo (1536×1024) to extract circular icon (700×700)
+- Resized to 1024×1024 for iOS app icon requirements
+- Updated AppIcon.appiconset with new terracotta and blue logo
+
+*Developer Tools:*
+- Created implementation plan for developer onboarding reset
+- Added `resetToOnboarding()` function to AuthViewModel (DEBUG-only)
+- Enhanced ProfilePlaceholderView from simple placeholder to settings list
+- Added "Developer Tools" section with "Reset to Onboarding" button
+- Feature only appears in debug builds (not in TestFlight/production)
+
+**Brand Alignment:**
+- Terracotta = Strength
+- Dusty Blue = Flow
+- Clay Neutral = Grace
+- Colors now perfectly align with brand name and logo design
+
+**Files Modified:**
+- `SGFTheme.swift` - Complete color palette update
+- `AuthViewModel.swift` - Added developer reset function
+- `MainTabView.swift` - Enhanced Profile view with developer tools
+- `TodayView.swift` - Softened period tracking language
+- `OnboardingContainerView.swift` - Gentler onboarding questions
+- `CycleHistoryView.swift` - Updated cycle tracking labels
+- `AuthService.swift` - Softer error messages
+- `WorkoutListView.swift` - Fixed spacing token issue
+
+**Documentation Added:**
+- `docs/user-voice/user-persona.md` - Target user definition
+- `docs/user-voice/voice-guidelines.md` - Complete writing guide
+- `docs/design_system/rebrand-2024-summary.md` - Rebrand rationale
+- `docs/implementation-plans/developer-onboarding-reset.md` - Dev tools plan
+- `docs/voice-alignment-changes-summary.md` - Detailed change log
+
+**Stopping Point:**
+✅ Brand refresh complete! App now has aligned voice, updated colors, new icon, and developer testing tools. Ready for final TestFlight preparation.
+
 ---
 
 ## Decision Log
@@ -334,6 +399,9 @@ Completed navigation integration, deployed backend to Railway, and merged all MV
 | 2025-12-21 | TestFlight before polish | Validate pipeline, get early feedback |
 | 2025-12-24 | Date-based cycle tracking | Better accuracy than averages, enables future features |
 | 2025-12-24 | Median over mean | Robust to irregular cycles, better UX |
+| 2025-12-29 | "Wise friend" voice | Target users want supportive, not clinical tone |
+| 2025-12-29 | Terracotta/blue rebrand | Align colors with new logo, brand meaning (Strength/Grace/Flow) |
+| 2025-12-29 | Developer reset feature | Enable rapid onboarding testing without account creation overhead |
 
 ---
 

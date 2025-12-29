@@ -175,6 +175,14 @@ class AuthViewModel: ObservableObject {
         authState = .authenticated
     }
 
+    // MARK: - Developer Tools
+
+    #if DEBUG
+    func resetToOnboarding() {
+        authState = .onboarding
+    }
+    #endif
+
     deinit {
         if let handle = authStateHandle {
             Auth.auth().removeStateDidChangeListener(handle)

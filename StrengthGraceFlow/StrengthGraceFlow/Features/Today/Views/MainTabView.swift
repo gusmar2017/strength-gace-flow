@@ -99,26 +99,63 @@ struct ProfilePlaceholderView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.sgfBackground
-                    .ignoresSafeArea()
+            List {
+                Section {
+                    HStack {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.sgfPrimary)
 
-                VStack(spacing: SGFSpacing.lg) {
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(.sgfPrimary)
+                        VStack(alignment: .leading, spacing: SGFSpacing.xs) {
+                            Text("Your Profile")
+                                .font(.sgfTitle3)
+                                .foregroundColor(.sgfTextPrimary)
 
-                    Text("Profile")
-                        .font(.sgfTitle2)
-                        .foregroundColor(.sgfTextPrimary)
-
-                    Button("Sign Out") {
-                        authViewModel.signOut()
+                            Text("Settings coming soon")
+                                .font(.sgfCaption)
+                                .foregroundColor(.sgfTextSecondary)
+                        }
+                        .padding(.leading, SGFSpacing.sm)
                     }
-                    .buttonStyle(SGFSecondaryButtonStyle())
-                    .padding(.horizontal, SGFSpacing.xl)
+                    .padding(.vertical, SGFSpacing.sm)
                 }
+                .listRowBackground(Color.sgfSurface)
+
+                Section {
+                    Button(action: {
+                        authViewModel.signOut()
+                    }) {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(.sgfSecondary)
+                            Text("Sign Out")
+                                .foregroundColor(.sgfTextPrimary)
+                        }
+                    }
+                }
+                .listRowBackground(Color.sgfSurface)
+
+                #if DEBUG
+                Section {
+                    Button(action: {
+                        authViewModel.resetToOnboarding()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.counterclockwise")
+                                .foregroundColor(.sgfSecondary)
+                            Text("Reset to Onboarding")
+                                .foregroundColor(.sgfTextPrimary)
+                        }
+                    }
+                } header: {
+                    Text("Developer Tools")
+                        .foregroundColor(.sgfTextSecondary)
+                }
+                .listRowBackground(Color.sgfSurface)
+                #endif
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.sgfBackground)
             .navigationTitle("Profile")
         }
     }
