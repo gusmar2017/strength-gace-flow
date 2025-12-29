@@ -445,7 +445,8 @@ struct EnergyTrackingCard: View {
 
     init(viewModel: TodayViewModel) {
         self.viewModel = viewModel
-        self._energyLevel = State(initialValue: Double(viewModel.todayEnergyLevel ?? 5))
+        let initialValue = Double(viewModel.todayEnergyLevel ?? 5)
+        self._energyLevel = State(initialValue: initialValue.isNaN ? 5.0 : initialValue)
     }
 
     var body: some View {
@@ -535,7 +536,8 @@ struct EnergyTrackingCard: View {
         )
         .onChange(of: viewModel.todayEnergyLevel) { oldValue, newValue in
             if let newValue = newValue {
-                energyLevel = Double(newValue)
+                let value = Double(newValue)
+                energyLevel = value.isNaN ? 5.0 : value
             }
         }
     }

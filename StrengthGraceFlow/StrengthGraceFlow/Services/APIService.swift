@@ -141,14 +141,6 @@ class APIService {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
             request.httpBody = try encoder.encode(body)
-
-            #if DEBUG
-            // Log request body for debugging
-            if let jsonString = String(data: request.httpBody!, encoding: .utf8) {
-                print("📤 API Request to \(endpoint):")
-                print(jsonString)
-            }
-            #endif
         }
 
         do {
@@ -171,24 +163,10 @@ class APIService {
                 // Validation error - try to parse error message from response
                 if let errorMessage = try? JSONDecoder().decode([String: String].self, from: data),
                    let detail = errorMessage["detail"] {
-                    #if DEBUG
-                    print("❌ 422 Validation Error: \(detail)")
-                    #endif
                     throw APIError.validationError(detail)
                 }
-                #if DEBUG
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("❌ 422 Response: \(responseString)")
-                }
-                #endif
                 throw APIError.validationError("Please check your input and try again")
             default:
-                #if DEBUG
-                print("❌ Server error \(httpResponse.statusCode)")
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("Response: \(responseString)")
-                }
-                #endif
                 throw APIError.serverError(httpResponse.statusCode)
             }
         } catch let error as APIError {

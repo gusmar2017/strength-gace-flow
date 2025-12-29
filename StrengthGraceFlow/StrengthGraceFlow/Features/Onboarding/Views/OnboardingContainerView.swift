@@ -51,14 +51,15 @@ struct OnboardingContainerView: View {
                     .tag(3)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut, value: currentStep)
             }
         }
     }
 
     private func nextStep() {
         if currentStep < totalSteps - 1 {
-            currentStep += 1
+            withAnimation(.easeInOut) {
+                currentStep += 1
+            }
         }
     }
 
@@ -69,8 +70,6 @@ struct OnboardingContainerView: View {
 
             #if DEBUG
             // For developer testing, just complete onboarding without API call
-            // This allows testing the UI flow without backend issues
-            print("🔧 DEBUG: Skipping API call for developer onboarding test")
             await MainActor.run {
                 authViewModel.completeOnboarding()
                 isLoading = false
@@ -170,12 +169,14 @@ struct ProgressBarView: View {
 
     var body: some View {
         HStack(spacing: SGFSpacing.xs) {
-            ForEach(0..<total, id: \.self) { index in
+            ForEach(0..<max(1, total), id: \.self) { index in
                 Capsule()
                     .fill(index <= current ? Color.sgfPrimary : Color.sgfTextTertiary.opacity(0.3))
-                    .frame(height: 4)
+                    .frame(minWidth: 0, maxWidth: .infinity)
             }
         }
+        .frame(height: 4)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -207,13 +208,21 @@ struct OnboardingNameView: View {
                 .focused($isFocused)
                 .submitLabel(.continue)
                 .onSubmit {
-                    if !displayName.isEmpty { onNext() }
+                    if !displayName.isEmpty {
+                        isFocused = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            onNext()
+                        }
+                    }
                 }
 
             Spacer()
 
             Button("Continue") {
-                onNext()
+                isFocused = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    onNext()
+                }
             }
             .buttonStyle(SGFPrimaryButtonStyle(isDisabled: displayName.isEmpty))
             .disabled(displayName.isEmpty)
@@ -221,7 +230,9 @@ struct OnboardingNameView: View {
             .padding(.bottom, SGFSpacing.xl)
         }
         .onAppear {
-            isFocused = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isFocused = true
+            }
         }
     }
 }
