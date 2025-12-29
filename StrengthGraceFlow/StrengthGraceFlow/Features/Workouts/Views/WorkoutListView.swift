@@ -155,7 +155,7 @@ struct WorkoutCard: View {
                     .foregroundColor(workout.category.color)
             }
 
-            VStack(alignment: .leading, spacing: SGFSpacing.xxs) {
+            VStack(alignment: .leading, spacing: SGFSpacing.xs) {
                 Text(workout.title)
                     .font(.sgfSubheadline)
                     .fontWeight(.semibold)

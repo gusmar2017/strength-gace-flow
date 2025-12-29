@@ -8,33 +8,49 @@
 import SwiftUI
 
 // MARK: - Colors
+// Based on Strength Grace Flow Design System v1.0
+// See: docs/design_system/design-system.md
 
 extension Color {
-    // Primary palette
-    static let sgfPrimary = Color(hex: "8B5CF6")       // Soft purple
-    static let sgfSecondary = Color(hex: "EC4899")     // Warm pink
-    static let sgfAccent = Color(hex: "F59E0B")        // Golden amber
+    // MARK: - Core Palette
+    static let sgfPrimary = Color(hex: "8FAEA3")       // Muted Sage - primary accents, buttons, active states
+    static let sgfSecondary = Color(hex: "C7A89A")     // Warm Clay - secondary accents, highlights
+    static let sgfAccent = Color(hex: "C7A89A")        // Warm Clay (alias for secondary)
 
-    // Background colors
-    static let sgfBackground = Color(hex: "FFFBF7")    // Warm cream
-    static let sgfSurface = Color.white
-    static let sgfSurfaceSecondary = Color(hex: "F9FAFB")
+    // MARK: - Background Colors
+    static let sgfBackground = Color(hex: "F6F1EA")    // Soft Sand - backgrounds, cards
+    static let sgfSurface = Color.white                // White - card surfaces
+    static let sgfSurfaceSecondary = Color(hex: "E8E0D5") // Sand Dark - elevated surfaces
 
-    // Text colors
-    static let sgfTextPrimary = Color(hex: "1F2937")   // Dark gray
-    static let sgfTextSecondary = Color(hex: "6B7280") // Medium gray
-    static let sgfTextTertiary = Color(hex: "9CA3AF")  // Light gray
+    // MARK: - Text Colors
+    static let sgfTextPrimary = Color(hex: "2E2E2E")   // Deep Charcoal - primary text
+    static let sgfTextSecondary = Color(hex: "5A5A5A") // Charcoal Light - secondary text
+    static let sgfTextTertiary = Color(hex: "8A8A8A")  // Charcoal Lighter - placeholder text, captions
 
-    // Cycle phase colors
-    static let sgfMenstrual = Color(hex: "EF4444")     // Soft red
-    static let sgfFollicular = Color(hex: "10B981")    // Fresh green
-    static let sgfOvulatory = Color(hex: "F59E0B")     // Warm amber
-    static let sgfLuteal = Color(hex: "8B5CF6")        // Calming purple
+    // MARK: - Extended Palette (Derived)
+    static let sgfSageLight = Color(hex: "B5CCC3")     // Sage Light - hover states, subtle backgrounds
+    static let sgfSageDark = Color(hex: "6B8F82")      // Sage Dark - pressed states, emphasis
+    static let sgfClayLight = Color(hex: "DBC7BD")     // Clay Light - secondary hover, warm highlights
+    static let sgfSandDark = Color(hex: "E8E0D5")      // Sand Dark - card backgrounds, dividers
+    static let sgfCharcoalLight = Color(hex: "5A5A5A") // Charcoal Light - secondary text
+    static let sgfCharcoalLighter = Color(hex: "8A8A8A") // Charcoal Lighter - placeholder text
 
-    // Semantic colors
-    static let sgfSuccess = Color(hex: "10B981")
-    static let sgfWarning = Color(hex: "F59E0B")
-    static let sgfError = Color(hex: "EF4444")
+    // MARK: - Cycle Phase Colors
+    static let sgfMenstrual = Color(hex: "C4A4A4")     // Deep Rose - warm, restful, nurturing
+    static let sgfFollicular = Color(hex: "8FAEA3")    // Fresh Sage - growth, renewal, energy rising
+    static let sgfOvulatory = Color(hex: "D4B896")     // Warm Gold - peak energy, warmth, vitality
+    static let sgfLuteal = Color(hex: "B8A4B0")        // Soft Mauve - winding down, introspection
+
+    // MARK: - Semantic Colors
+    static let sgfSuccess = Color(hex: "8FAEA3")       // Use muted sage for success
+    static let sgfWarning = Color(hex: "D4B896")       // Use warm gold for warnings
+    static let sgfError = Color(hex: "C4A4A4")         // Use deep rose for errors (softer than bright red)
+
+    // MARK: - Interactive States
+    static var sgfPrimaryHover: Color { .sgfSageLight }
+    static var sgfPrimaryPressed: Color { .sgfSageDark }
+    static var sgfSecondaryHover: Color { .sgfClayLight }
+    static var sgfDivider: Color { .sgfSandDark }
 
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -80,15 +96,15 @@ extension Font {
 }
 
 // MARK: - Spacing
+// 8pt grid system
 
 struct SGFSpacing {
-    static let xxs: CGFloat = 4
-    static let xs: CGFloat = 8
-    static let sm: CGFloat = 12
-    static let md: CGFloat = 16
-    static let lg: CGFloat = 24
-    static let xl: CGFloat = 32
-    static let xxl: CGFloat = 48
+    static let xs: CGFloat = 4      // Tight spacing, icon gaps
+    static let sm: CGFloat = 8      // Related elements
+    static let md: CGFloat = 16     // Standard padding
+    static let lg: CGFloat = 24     // Section spacing
+    static let xl: CGFloat = 32     // Major sections
+    static let xxl: CGFloat = 48    // Screen margins, hero spacing
 }
 
 // MARK: - Corner Radius
@@ -114,10 +130,9 @@ struct SGFPrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, SGFSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                    .fill(isDisabled ? Color.sgfTextTertiary : Color.sgfPrimary)
+                    .fill(isDisabled ? Color.sgfTextTertiary : (configuration.isPressed ? Color.sgfPrimaryPressed : Color.sgfPrimary))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
@@ -126,15 +141,18 @@ struct SGFSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.sgfHeadline)
-            .foregroundColor(.sgfPrimary)
+            .foregroundColor(configuration.isPressed ? .sgfPrimaryPressed : .sgfPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, SGFSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                    .stroke(Color.sgfPrimary, lineWidth: 2)
+                    .fill(configuration.isPressed ? Color.sgfPrimaryHover.opacity(0.2) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                    .stroke(configuration.isPressed ? Color.sgfPrimaryPressed : Color.sgfPrimary, lineWidth: 2)
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
