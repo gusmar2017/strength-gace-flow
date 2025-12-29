@@ -84,7 +84,7 @@ struct CalendarPlaceholderView: View {
                         .font(.sgfTitle2)
                         .foregroundColor(.sgfTextPrimary)
 
-                    Text("Track your cycle history")
+                    Text("Your cycle history and patterns")
                         .font(.sgfBody)
                         .foregroundColor(.sgfTextSecondary)
                 }

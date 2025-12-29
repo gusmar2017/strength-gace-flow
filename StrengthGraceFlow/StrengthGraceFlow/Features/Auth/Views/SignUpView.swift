@@ -29,7 +29,7 @@ struct SignUpView: View {
                             .font(.sgfTitle)
                             .foregroundColor(.sgfTextPrimary)
 
-                        Text("Start your cycle-synced fitness journey")
+                        Text("Movement in harmony with your body's rhythm")
                             .font(.sgfBody)
                             .foregroundColor(.sgfTextSecondary)
                     }

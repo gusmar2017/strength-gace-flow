@@ -145,19 +145,19 @@ struct WorkoutDetailView: View {
         case .yoga:
             return "Flow through gentle poses designed to stretch and strengthen your body while calming your mind. Perfect for any time you need to reset."
         case .strength:
-            return "Build functional strength with compound movements. Focus on proper form and controlled movements for maximum results."
+            return "Build functional strength with mindful, controlled movements. Focus on the connection between breath and effort to find your balance."
         case .cardio:
-            return "Get your heart pumping with this energizing cardio session. Modified movements available for all fitness levels."
+            return "Energizing movement to elevate your heart rate and build endurance. Find your rhythm and honor your body's pace."
         case .hiit:
-            return "High-intensity intervals designed to maximize calorie burn and boost your metabolism. Push yourself!"
+            return "High-intensity intervals designed to challenge your strength and stamina. Listen to your body and move with intention."
         case .pilates:
-            return "Core-focused movements to build strength and stability. Emphasis on controlled, precise movements."
+            return "Core-focused movements to build strength and stability through alignment and breath. Emphasis on controlled, precise flow."
         case .stretching:
-            return "Full body stretching routine to improve flexibility and release tension. Great for rest days."
+            return "Gentle, full-body stretching to improve flexibility and release tension. Create space and ease in your body."
         case .barre:
-            return "Low-impact, high-results workout combining ballet, yoga, and Pilates movements."
+            return "Graceful, low-impact movements combining ballet, yoga, and Pilates to build strength with harmony and balance."
         case .dance:
-            return "Fun, energizing dance cardio with easy-to-follow choreography. No dance experience needed!"
+            return "Joyful, energizing movement with flowing choreography. Let your body express itself freely."
         }
     }
 
@@ -266,7 +266,7 @@ struct WorkoutCompletionView: View {
                         .font(.system(size: 80))
                         .foregroundColor(.sgfSuccess)
 
-                    Text("Great job!")
+                    Text("Well done")
                         .font(.sgfLargeTitle)
                         .foregroundColor(.sgfTextPrimary)
 
@@ -283,7 +283,7 @@ struct WorkoutCompletionView: View {
 
                 // Rating
                 VStack(spacing: SGFSpacing.sm) {
-                    Text("How was it?")
+                    Text("How did that feel?")
                         .font(.sgfHeadline)
                         .foregroundColor(.sgfTextPrimary)
 

@@ -69,12 +69,12 @@ struct LogPeriodBanner: View {
                     .foregroundColor(.sgfMenstrual)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Did your period start?")
+                    Text("Is today day 1 of your cycle?")
                         .font(.sgfSubheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.sgfTextPrimary)
 
-                    Text("Tap to log for better predictions")
+                    Text("Tap to log when you're ready")
                         .font(.sgfCaption)
                         .foregroundColor(.sgfTextSecondary)
                 }
@@ -117,12 +117,12 @@ struct LogPeriodSheet: View {
                     )
                 }
 
-                Section("Notes (Optional)") {
+                Section("Add a note (optional)") {
                     TextEditor(text: $notes)
                         .frame(height: 100)
                 }
             }
-            .navigationTitle("Log Period Start")
+            .navigationTitle("Day 1")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -171,13 +171,13 @@ enum CyclePhase: String, CaseIterable {
     var description: String {
         switch self {
         case .menstrual:
-            return "Rest and recover. Focus on gentle movement."
+            return "A time for rest and gentle movement."
         case .follicular:
-            return "Energy rising! Great time to try new things."
+            return "Your energy is building. A good time to try new things."
         case .ovulatory:
-            return "Peak energy! Push yourself with high intensity."
+            return "You may feel your energy is at its fullest."
         case .luteal:
-            return "Wind down. Focus on strength and stability."
+            return "A time to honor your need for balance and stability."
         }
     }
 
@@ -409,7 +409,7 @@ struct PhaseTipsCard: View {
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.sgfAccent)
-                Text("Phase Tips")
+                Text("For This Phase")
                     .font(.sgfHeadline)
                     .foregroundColor(.sgfTextPrimary)
             }
@@ -511,7 +511,7 @@ struct EnergyTrackingCard: View {
                             ProgressView()
                                 .tint(.white)
                         } else {
-                            Text(viewModel.todayEnergyLevel == nil ? "Log Energy" : "Update")
+                            Text(viewModel.todayEnergyLevel == nil ? "Check In" : "Update")
                                 .fontWeight(.semibold)
                         }
                     }

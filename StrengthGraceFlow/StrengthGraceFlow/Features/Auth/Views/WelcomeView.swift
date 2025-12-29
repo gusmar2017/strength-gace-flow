@@ -31,7 +31,7 @@ struct WelcomeView: View {
                             .font(.sgfLargeTitle)
                             .foregroundColor(.sgfTextPrimary)
 
-                        Text("Workouts synced to your cycle")
+                        Text("Movement in harmony with your cycle")
                             .font(.sgfBody)
                             .foregroundColor(.sgfTextSecondary)
                     }

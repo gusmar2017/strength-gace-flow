@@ -113,7 +113,7 @@ class AuthViewModel: ObservableObject {
 
         do {
             try await authService.resetPassword(email: email)
-            errorMessage = "Password reset email sent. Check your inbox."
+            errorMessage = "We've sent you an email to reset your password."
         } catch let error as AuthError {
             errorMessage = error.errorDescription
         } catch {
@@ -127,22 +127,22 @@ class AuthViewModel: ObservableObject {
 
     private func validateSignUpForm() -> Bool {
         guard !email.isEmpty else {
-            errorMessage = "Please enter your email."
+            errorMessage = "Please enter your email address."
             return false
         }
 
         guard !password.isEmpty else {
-            errorMessage = "Please enter a password."
+            errorMessage = "Please choose a password."
             return false
         }
 
         guard password.count >= 6 else {
-            errorMessage = "Password must be at least 6 characters."
+            errorMessage = "Your password needs at least 6 characters."
             return false
         }
 
         guard password == confirmPassword else {
-            errorMessage = "Passwords do not match."
+            errorMessage = "Those passwords don't match. Please try again."
             return false
         }
 
@@ -151,7 +151,7 @@ class AuthViewModel: ObservableObject {
 
     private func validateSignInForm() -> Bool {
         guard !email.isEmpty else {
-            errorMessage = "Please enter your email."
+            errorMessage = "Please enter your email address."
             return false
         }
 

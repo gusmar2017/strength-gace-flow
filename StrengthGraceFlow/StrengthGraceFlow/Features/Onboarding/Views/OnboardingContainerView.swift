@@ -206,11 +206,11 @@ struct OnboardingGoalsView: View {
     var body: some View {
         VStack(spacing: SGFSpacing.xl) {
             VStack(spacing: SGFSpacing.md) {
-                Text("What are your goals?")
+                Text("What brings you here?")
                     .font(.sgfTitle)
                     .foregroundColor(.sgfTextPrimary)
 
-                Text("Select all that apply")
+                Text("Choose what resonates with you")
                     .font(.sgfBody)
                     .foregroundColor(.sgfTextSecondary)
             }
@@ -301,11 +301,11 @@ struct OnboardingLevelView: View {
     var body: some View {
         VStack(spacing: SGFSpacing.xl) {
             VStack(spacing: SGFSpacing.md) {
-                Text("What's your fitness level?")
+                Text("How would you describe your current practice?")
                     .font(.sgfTitle)
                     .foregroundColor(.sgfTextPrimary)
 
-                Text("We'll personalize workouts for you")
+                Text("We'll suggest movement that feels right for you")
                     .font(.sgfBody)
                     .foregroundColor(.sgfTextSecondary)
             }
@@ -397,12 +397,12 @@ struct OnboardingCycleView: View {
     var body: some View {
         VStack(spacing: SGFSpacing.xl) {
             VStack(spacing: SGFSpacing.md) {
-                Text("When did your last few periods start?")
+                Text("When did your last few cycles begin?")
                     .font(.sgfTitle)
                     .foregroundColor(.sgfTextPrimary)
                     .multilineTextAlignment(.center)
 
-                Text("Add 1-3 recent start dates for better predictions")
+                Text("Add 1-3 recent dates to help us understand your rhythm")
                     .font(.sgfBody)
                     .foregroundColor(.sgfTextSecondary)
                     .multilineTextAlignment(.center)
@@ -441,7 +441,7 @@ struct OnboardingCycleView: View {
                         HStack {
                             Image(systemName: "plus.circle.fill")
                                 .foregroundColor(.sgfPrimary)
-                            Text("Add period start date")
+                            Text("Add cycle start date")
                                 .font(.sgfBody)
                                 .foregroundColor(.sgfPrimary)
                         }
@@ -461,7 +461,7 @@ struct OnboardingCycleView: View {
                     Text("Don't remember exact dates?")
                         .font(.sgfCaption)
                         .foregroundColor(.sgfTextTertiary)
-                    Text("You can skip this and log your next period when it starts")
+                    Text("You can skip this and begin tracking whenever you're ready")
                         .font(.sgfCaption)
                         .foregroundColor(.sgfTextTertiary)
                         .multilineTextAlignment(.center)
@@ -500,7 +500,7 @@ struct DatePickerSheet: View {
         NavigationStack {
             VStack {
                 DatePicker(
-                    "Period Start Date",
+                    "Cycle Start Date",
                     selection: $selectedDate,
                     in: ...Date(),
                     displayedComponents: .date

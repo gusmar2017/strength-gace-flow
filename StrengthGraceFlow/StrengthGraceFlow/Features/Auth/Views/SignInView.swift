@@ -29,7 +29,7 @@ struct SignInView: View {
                             .font(.sgfTitle)
                             .foregroundColor(.sgfTextPrimary)
 
-                        Text("Sign in to continue your journey")
+                        Text("Welcome back to your practice")
                             .font(.sgfBody)
                             .foregroundColor(.sgfTextSecondary)
                     }

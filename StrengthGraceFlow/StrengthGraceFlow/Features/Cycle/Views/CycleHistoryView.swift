@@ -80,7 +80,7 @@ struct StatsCard: View {
                 Text("\(averageCycle)")
                     .font(.sgfLargeTitle)
                     .foregroundColor(.sgfPrimary)
-                Text("Avg Cycle")
+                Text("Average Length")
                     .font(.sgfCaption)
                     .foregroundColor(.sgfTextSecondary)
             }
@@ -91,7 +91,7 @@ struct StatsCard: View {
                 Text("\(totalCycles)")
                     .font(.sgfLargeTitle)
                     .foregroundColor(.sgfSecondary)
-                Text("Cycles Logged")
+                Text("Cycles Tracked")
                     .font(.sgfCaption)
                     .foregroundColor(.sgfTextSecondary)
             }
@@ -169,17 +169,17 @@ struct EmptyHistoryView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.sgfTextTertiary)
 
-            Text("No Cycle History Yet")
+            Text("Your Cycle History")
                 .font(.sgfTitle2)
                 .foregroundColor(.sgfTextPrimary)
 
-            Text("Start tracking by logging your period start dates")
+            Text("Your insights will appear here as you track")
                 .font(.sgfBody)
                 .foregroundColor(.sgfTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, SGFSpacing.xl)
 
-            Button("Log First Period") {
+            Button("Begin Tracking") {
                 onAddFirst()
             }
             .buttonStyle(SGFPrimaryButtonStyle())
@@ -208,12 +208,12 @@ struct AddPeriodSheet: View {
                     )
                 }
 
-                Section("Notes (Optional)") {
+                Section("Add a note (optional)") {
                     TextEditor(text: $notes)
                         .frame(height: 100)
                 }
             }
-            .navigationTitle("Log Period")
+            .navigationTitle("Day 1")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -20,17 +20,17 @@ enum AuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidEmail:
-            return "Please enter a valid email address."
+            return "Please check your email address."
         case .weakPassword:
-            return "Password must be at least 6 characters."
+            return "Your password needs at least 6 characters."
         case .emailAlreadyInUse:
-            return "An account with this email already exists."
+            return "This email is already connected to an account."
         case .wrongPassword:
-            return "Incorrect password. Please try again."
+            return "That password doesn't look quite right. Please try again."
         case .userNotFound:
-            return "No account found with this email."
+            return "We couldn't find an account with this email."
         case .networkError:
-            return "Network error. Please check your connection."
+            return "We're having trouble connecting. Please check your connection and try again."
         case .unknown(let message):
             return message
         }
