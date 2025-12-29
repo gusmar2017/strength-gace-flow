@@ -13,9 +13,9 @@ import SwiftUI
 
 extension Color {
     // MARK: - Core Palette
-    static let sgfPrimary = Color(hex: "8FAEA3")       // Muted Sage - primary accents, buttons, active states
-    static let sgfSecondary = Color(hex: "C7A89A")     // Warm Clay - secondary accents, highlights
-    static let sgfAccent = Color(hex: "C7A89A")        // Warm Clay (alias for secondary)
+    static let sgfPrimary = Color(hex: "B35C44")       // Deep Terracotta - primary accents, buttons, active states
+    static let sgfSecondary = Color(hex: "6F8F9B")     // Dusty Blue - secondary accents, calm elements
+    static let sgfAccent = Color(hex: "D8B8A6")        // Soft Clay Neutral - tertiary accents, highlights
 
     // MARK: - Background Colors
     static let sgfBackground = Color(hex: "F6F1EA")    // Soft Sand - backgrounds, cards
@@ -28,28 +28,30 @@ extension Color {
     static let sgfTextTertiary = Color(hex: "8A8A8A")  // Charcoal Lighter - placeholder text, captions
 
     // MARK: - Extended Palette (Derived)
-    static let sgfSageLight = Color(hex: "B5CCC3")     // Sage Light - hover states, subtle backgrounds
-    static let sgfSageDark = Color(hex: "6B8F82")      // Sage Dark - pressed states, emphasis
-    static let sgfClayLight = Color(hex: "DBC7BD")     // Clay Light - secondary hover, warm highlights
-    static let sgfSandDark = Color(hex: "E8E0D5")      // Sand Dark - card backgrounds, dividers
-    static let sgfCharcoalLight = Color(hex: "5A5A5A") // Charcoal Light - secondary text
+    static let sgfTerracottaLight = Color(hex: "C98F7A") // Terracotta Light - hover states, subtle backgrounds
+    static let sgfTerracottaDark = Color(hex: "8B4030")  // Terracotta Dark - pressed states, emphasis
+    static let sgfBlueLight = Color(hex: "9FB5BE")       // Blue Light - secondary hover, calm highlights
+    static let sgfBlueDark = Color(hex: "4A6A78")        // Blue Dark - pressed states for blue elements
+    static let sgfClayLight = Color(hex: "E8D4C5")       // Clay Light - soft backgrounds, cards
+    static let sgfSandDark = Color(hex: "E8E0D5")        // Sand Dark - card backgrounds, dividers
+    static let sgfCharcoalLight = Color(hex: "5A5A5A")   // Charcoal Light - secondary text
     static let sgfCharcoalLighter = Color(hex: "8A8A8A") // Charcoal Lighter - placeholder text
 
     // MARK: - Cycle Phase Colors
-    static let sgfMenstrual = Color(hex: "C4A4A4")     // Deep Rose - warm, restful, nurturing
-    static let sgfFollicular = Color(hex: "8FAEA3")    // Fresh Sage - growth, renewal, energy rising
-    static let sgfOvulatory = Color(hex: "D4B896")     // Warm Gold - peak energy, warmth, vitality
-    static let sgfLuteal = Color(hex: "B8A4B0")        // Soft Mauve - winding down, introspection
+    static let sgfMenstrual = Color(hex: "B35C44")     // Deep Terracotta - warm, grounding, restful
+    static let sgfFollicular = Color(hex: "6F8F9B")    // Dusty Blue - growth, calm renewal, rising energy
+    static let sgfOvulatory = Color(hex: "D8B8A6")     // Soft Clay Neutral - peak warmth, gentle vitality
+    static let sgfLuteal = Color(hex: "9B9A9A")        // Blue-Clay Blend - winding down, balanced introspection
 
     // MARK: - Semantic Colors
-    static let sgfSuccess = Color(hex: "8FAEA3")       // Use muted sage for success
-    static let sgfWarning = Color(hex: "D4B896")       // Use warm gold for warnings
-    static let sgfError = Color(hex: "C4A4A4")         // Use deep rose for errors (softer than bright red)
+    static let sgfSuccess = Color(hex: "6F8F9B")       // Use dusty blue for success
+    static let sgfWarning = Color(hex: "D8B8A6")       // Use soft clay for warnings
+    static let sgfError = Color(hex: "B35C44")         // Use terracotta for errors
 
     // MARK: - Interactive States
-    static var sgfPrimaryHover: Color { .sgfSageLight }
-    static var sgfPrimaryPressed: Color { .sgfSageDark }
-    static var sgfSecondaryHover: Color { .sgfClayLight }
+    static var sgfPrimaryHover: Color { .sgfTerracottaLight }
+    static var sgfPrimaryPressed: Color { .sgfTerracottaDark }
+    static var sgfSecondaryHover: Color { .sgfBlueLight }
     static var sgfDivider: Color { .sgfSandDark }
 
     init(hex: String) {

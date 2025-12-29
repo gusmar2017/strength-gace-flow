@@ -21,17 +21,20 @@
 | Name | Hex | RGB | Usage |
 |------|-----|-----|-------|
 | **Soft Sand** | `#F6F1EA` | 246, 241, 234 | Backgrounds, cards |
-| **Muted Sage** | `#8FAEA3` | 143, 174, 163 | Primary accents, buttons, active states |
-| **Warm Clay** | `#C7A89A` | 199, 168, 154 | Secondary accents, highlights |
 | **Deep Charcoal** | `#2E2E2E` | 46, 46, 46 | Primary text |
+| **Deep Terracotta** | `#B35C44` | 179, 92, 68 | Primary accents, buttons, active states |
+| **Dusty Blue** | `#6F8F9B` | 111, 143, 155 | Secondary accents, calm elements |
+| **Soft Clay Neutral** | `#D8B8A6` | 216, 184, 166 | Tertiary accents, highlights |
 
 ### Extended Palette (Derived)
 
 | Name | Hex | Usage |
 |------|-----|-------|
-| **Sage Light** | `#B5CCC3` | Hover states, subtle backgrounds |
-| **Sage Dark** | `#6B8F82` | Pressed states, emphasis |
-| **Clay Light** | `#DBC7BD` | Secondary hover, warm highlights |
+| **Terracotta Light** | `#C98F7A` | Hover states, subtle backgrounds |
+| **Terracotta Dark** | `#8B4030` | Pressed states, emphasis |
+| **Blue Light** | `#9FB5BE` | Secondary hover, calm highlights |
+| **Blue Dark** | `#4A6A78` | Pressed states for blue elements |
+| **Clay Light** | `#E8D4C5` | Soft backgrounds, cards |
 | **Sand Dark** | `#E8E0D5` | Card backgrounds, dividers |
 | **Charcoal Light** | `#5A5A5A` | Secondary text |
 | **Charcoal Lighter** | `#8A8A8A` | Placeholder text, captions |
@@ -42,10 +45,10 @@ Each menstrual phase has a color that fits within the brand palette:
 
 | Phase | Color | Hex | Rationale |
 |-------|-------|-----|-----------|
-| **Menstrual** | Deep Rose | `#C4A4A4` | Warm, restful, nurturing |
-| **Follicular** | Fresh Sage | `#8FAEA3` | Growth, renewal, energy rising |
-| **Ovulatory** | Warm Gold | `#D4B896` | Peak energy, warmth, vitality |
-| **Luteal** | Soft Mauve | `#B8A4B0` | Winding down, introspection |
+| **Menstrual** | Deep Terracotta | `#B35C44` | Warm, grounding, restful |
+| **Follicular** | Dusty Blue | `#6F8F9B` | Growth, calm renewal, rising energy |
+| **Ovulatory** | Soft Clay Neutral | `#D8B8A6` | Peak warmth, gentle vitality |
+| **Luteal** | Blue-Clay Blend | `#9B9A9A` | Winding down, balanced introspection |
 
 ---
 
