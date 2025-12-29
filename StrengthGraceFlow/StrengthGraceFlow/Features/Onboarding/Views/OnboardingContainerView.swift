@@ -15,6 +15,8 @@ struct OnboardingContainerView: View {
     @State private var selectedGoals: Set<FitnessGoal> = []
     @State private var selectedLevel: FitnessLevel?
     @State private var cycleDates: [Date] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     let totalSteps = 4
 
@@ -42,6 +44,8 @@ struct OnboardingContainerView: View {
 
                     OnboardingCycleView(
                         cycleDates: $cycleDates,
+                        isLoading: $isLoading,
+                        errorMessage: $errorMessage,
                         onComplete: completeOnboarding
                     )
                     .tag(3)
@@ -60,6 +64,18 @@ struct OnboardingContainerView: View {
 
     private func completeOnboarding() {
         Task {
+            isLoading = true
+            errorMessage = nil
+
+            #if DEBUG
+            // For developer testing, just complete onboarding without API call
+            // This allows testing the UI flow without backend issues
+            print("🔧 DEBUG: Skipping API call for developer onboarding test")
+            await MainActor.run {
+                authViewModel.completeOnboarding()
+                isLoading = false
+            }
+            #else
             do {
                 // Calculate averages from dates if provided
                 let (avgCycle, avgPeriod) = calculateAveragesFromDates(cycleDates)
@@ -76,28 +92,55 @@ struct OnboardingContainerView: View {
                     }
                 }
 
-                // Create user profile with initial cycle dates
-                let request = CreateUserRequest(
-                    displayName: displayName,
-                    fitnessLevel: selectedLevel?.rawValue.lowercased(),
-                    goals: goalStrings,
-                    averageCycleLength: avgCycle,
-                    averagePeriodLength: avgPeriod,
-                    cycleTrackingEnabled: true,
-                    notificationsEnabled: true,
-                    initialCycleDates: cycleDates.isEmpty ? nil : cycleDates.sorted()
-                )
-
-                _ = try await APIService.shared.createUserProfile(data: request)
+                // Try to update profile first (for existing users during developer reset)
+                // If that fails, create a new profile (for new users)
+                do {
+                    let updateRequest = UpdateUserRequest(
+                        displayName: displayName,
+                        fitnessLevel: selectedLevel?.rawValue.lowercased(),
+                        goals: goalStrings,
+                        averageCycleLength: avgCycle,
+                        averagePeriodLength: avgPeriod,
+                        cycleTrackingEnabled: true,
+                        notificationsEnabled: true
+                    )
+                    _ = try await APIService.shared.updateUserProfile(data: updateRequest)
+                } catch let error as APIError {
+                    // If update fails with 404 (user profile doesn't exist), create it
+                    if case .notFound = error {
+                        let createRequest = CreateUserRequest(
+                            displayName: displayName,
+                            fitnessLevel: selectedLevel?.rawValue.lowercased(),
+                            goals: goalStrings,
+                            averageCycleLength: avgCycle,
+                            averagePeriodLength: avgPeriod,
+                            cycleTrackingEnabled: true,
+                            notificationsEnabled: true,
+                            initialCycleDates: nil
+                        )
+                        _ = try await APIService.shared.createUserProfile(data: createRequest)
+                    } else {
+                        throw error
+                    }
+                }
 
                 // Complete onboarding in auth view model
                 await MainActor.run {
                     authViewModel.completeOnboarding()
+                    isLoading = false
+                }
+            } catch let error as APIError {
+                await MainActor.run {
+                    errorMessage = error.errorDescription
+                    isLoading = false
                 }
             } catch {
-                print("Error completing onboarding: \(error)")
-                // TODO: Show error to user
+                await MainActor.run {
+                    errorMessage = "Something went wrong. Please try again."
+                    isLoading = false
+                }
             }
+            #endif
         }
     }
 
@@ -389,6 +432,8 @@ struct LevelCard: View {
 
 struct OnboardingCycleView: View {
     @Binding var cycleDates: [Date]
+    @Binding var isLoading: Bool
+    @Binding var errorMessage: String?
     let onComplete: () -> Void
 
     @State private var showingDatePicker = false
@@ -471,10 +516,20 @@ struct OnboardingCycleView: View {
 
             Spacer()
 
+            // Error message
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .font(.sgfCaption)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, SGFSpacing.lg)
+            }
+
             Button(cycleDates.isEmpty ? "Skip for Now" : "Continue") {
                 onComplete()
             }
-            .buttonStyle(SGFPrimaryButtonStyle())
+            .buttonStyle(SGFPrimaryButtonStyle(isDisabled: isLoading))
+            .disabled(isLoading)
             .padding(.horizontal, SGFSpacing.lg)
             .padding(.bottom, SGFSpacing.xl)
         }

@@ -29,6 +29,11 @@ class AuthViewModel: ObservableObject {
     private let authService = AuthService.shared
     private var authStateHandle: AuthStateDidChangeListenerHandle?
 
+    #if DEBUG
+    // Flag to prevent auth listener from overriding during developer onboarding reset
+    private var isDeveloperOnboardingReset = false
+    #endif
+
     init() {
         setupAuthStateListener()
     }
@@ -36,6 +41,11 @@ class AuthViewModel: ObservableObject {
     private func setupAuthStateListener() {
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
+                #if DEBUG
+                // Don't override state during developer onboarding reset
+                guard self?.isDeveloperOnboardingReset != true else { return }
+                #endif
+
                 if user != nil {
                     // Check if user has completed onboarding
                     // For now, assume authenticated users have completed onboarding
@@ -172,6 +182,9 @@ class AuthViewModel: ObservableObject {
     // MARK: - Onboarding Complete
 
     func completeOnboarding() {
+        #if DEBUG
+        isDeveloperOnboardingReset = false
+        #endif
         authState = .authenticated
     }
 
@@ -179,6 +192,7 @@ class AuthViewModel: ObservableObject {
 
     #if DEBUG
     func resetToOnboarding() {
+        isDeveloperOnboardingReset = true
         authState = .onboarding
     }
     #endif
