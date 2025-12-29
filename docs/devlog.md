@@ -386,6 +386,53 @@ Major brand refresh with new logo, updated color palette, and comprehensive voic
 **Stopping Point:**
 ✅ Brand refresh complete! App now has aligned voice, updated colors, new icon, and developer testing tools. Ready for final TestFlight preparation.
 
+### 2025-12-29 (Later) — Onboarding Bug Fixes & Logging Cleanup
+
+**Session Summary:**
+Resolved critical onboarding UX bugs and cleaned up console logging for better developer experience.
+
+**Accomplishments:**
+
+*Keyboard Dismissal Fix:*
+- Fixed keyboard not dismissing after name entry in onboarding flow
+- Added `isFocused = false` before transitioning to next step
+- Added timing delays (0.3s) between keyboard dismissal and page navigation
+- Prevents keyboard and TabView animations from conflicting
+
+*CoreGraphics NaN Error Resolution:*
+- Fixed NaN errors during TabView page transitions
+- Improved ProgressBarView layout with flexible width constraints
+- Added `.frame(minWidth: 0, maxWidth: .infinity)` to progress bar capsules
+- Moved animation control from TabView modifier to `nextStep()` function
+- Added NaN safeguards to energy slider initialization in TodayView
+
+*Logging Cleanup:*
+- Added proper AppDelegate conforming to UIApplicationDelegate
+- Moved Firebase configuration to AppDelegate to suppress warnings
+- Removed all verbose API error logging (422, 500 responses)
+- Removed debug print statements from onboarding flow
+- Console now only shows unavoidable Apple system warnings
+
+*Xcode Scheme:*
+- Added `CG_NUMERICS_SHOW_BACKTRACE` environment variable to scheme
+- Committed xcshareddata to repository for team consistency
+
+**Technical Details:**
+- Progress bar now uses flexible layout to prevent divide-by-zero scenarios
+- Keyboard transitions use DispatchQueue delays to prevent concurrent animations
+- Energy slider validates input values aren't NaN before initialization
+- API errors still properly thrown and handled, just not logged to console
+
+**Files Modified:**
+- `OnboardingContainerView.swift` - Keyboard timing, progress bar layout, animation control
+- `TodayView.swift` - Energy slider NaN safeguards
+- `APIService.swift` - Removed verbose error logging
+- `StrengthGraceFlowApp.swift` - Added AppDelegate
+- `StrengthGraceFlow.xcscheme` - Added backtrace environment variable
+
+**Stopping Point:**
+✅ Onboarding flow is now smooth with proper keyboard handling. Console logs are clean with only unavoidable system warnings. Ready for continued TestFlight preparation.
+
 ---
 
 ## Decision Log
