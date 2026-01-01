@@ -435,6 +435,75 @@ Resolved critical onboarding UX bugs and cleaned up console logging for better d
 
 ---
 
+### 2026-01-01: Cycle Tracking Enhancements (Calendar View, Smart Prompting, Onboarding Validation)
+
+**Branch:** `feature/cycle-tracking-enhancements`
+
+**Summary:**
+Implemented three interconnected cycle tracking improvements: calendar visualization, intelligent prompting based on cycle patterns, and onboarding validation requiring at least one cycle date.
+
+**Feature 1 - Onboarding Validation:**
+- Require minimum 1 cycle date during onboarding (previously skippable)
+- Disabled "Continue" button when no dates entered
+- Updated helper text to be encouraging rather than offering skip option
+- Ensures backend has anchor date for accurate predictions
+
+**Feature 2 - Intelligent Cycle Start Prompting:**
+- Replaced hardcoded "day 20+" logic with pattern-based algorithm
+- Calculates cycle variability from historical data using standard deviation
+- Dynamic prompt window sizing:
+  - Very regular cycles (≤1 day std dev): ±2 days
+  - Moderately regular (1-2 days): ±3 days
+  - Somewhat irregular (2-4 days): ±4 days
+  - Very irregular (>4 days): ±5 days
+- Gets smarter as user logs more cycles
+
+**Feature 3 - Calendar View with Phase Visualization:**
+- Created full visual calendar replacing list-based cycle history
+- Month grid with weekday headers and navigation
+- Phase-shaded background colors at 0.3 opacity (terracotta/dusty blue palette)
+- Red dot markers on cycle start dates
+- Today highlighting with border
+- Tap any date to add cycle start
+- Phase legend showing all 4 phases
+- Next period prediction card
+
+**Technical Fixes:**
+- Fixed DEBUG mode skipping API calls in onboarding (removed conditional)
+- Fixed `initialCycleDates` being sent as `nil` instead of actual dates
+- Fixed SwiftUI ForEach duplicate ID warnings (weekday headers and calendar cells)
+- Fixed `getCycleHistory` limit validation (50 → 24 max)
+- Fixed date format for backend (midnight UTC normalization)
+- Created custom date decoder handling both ISO8601 datetime and date-only formats
+- Fixed `PhasePrediction` model field name (`predicted_phase` vs `phase`)
+- Added UTC date normalization helper for backend compatibility
+
+**New Files Created:**
+- `CycleCalendarViewModel.swift` - Calendar state and data management
+- `CycleCalendarView.swift` - Main calendar screen with navigation
+- `CalendarGridView.swift` - Month grid layout with phase coloring
+- `CalendarDayCell.swift` - Individual day cell component
+- `docs/implementation-plans/cycle-tracking-enhancements.md` - Full implementation plan
+
+**Files Modified:**
+- `OnboardingContainerView.swift` - Validation, DEBUG fix, initialCycleDates
+- `TodayViewModel.swift` - Smart prompting algorithm
+- `MainTabView.swift` - Calendar tab replacement
+- `APIService.swift` - Custom date decoder, response handling
+- `CalendarGridView.swift` - ForEach ID fixes
+- `CycleCalendarViewModel.swift` - Date normalization
+
+**Backend API Compatibility:**
+- Backend expects `limit ≤ 24` for cycle history
+- Backend requires dates at midnight UTC (no time component)
+- Backend returns dates as `"2025-12-02"` (date-only strings)
+- Backend uses `predicted_phase` field name in predictions
+
+**Stopping Point:**
+✅ All three features implemented and tested. Calendar displays cycle dates with phase shading, red dot markers, and predictions. Smart prompting adapts to user patterns. Onboarding requires at least 1 date. Ready for merge to main.
+
+---
+
 ## Decision Log
 
 | Date | Decision | Rationale |

@@ -47,6 +47,35 @@ class APIService {
 
     private init() {}
 
+    // Custom date decoder that handles both ISO8601 datetime and date-only formats
+    private static let customDateDecoder: (Decoder) throws -> Date = { decoder in
+        let container = try decoder.singleValueContainer()
+        let dateString = try container.decode(String.self)
+
+        // Try ISO8601 with time first (e.g., "2025-12-02T00:00:00Z")
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = iso8601Formatter.date(from: dateString) {
+            return date
+        }
+
+        // Try ISO8601 without fractional seconds
+        iso8601Formatter.formatOptions = [.withInternetDateTime]
+        if let date = iso8601Formatter.date(from: dateString) {
+            return date
+        }
+
+        // Try date-only format (e.g., "2025-12-02")
+        let dateOnlyFormatter = DateFormatter()
+        dateOnlyFormatter.dateFormat = "yyyy-MM-dd"
+        dateOnlyFormatter.timeZone = TimeZone(identifier: "UTC")
+        if let date = dateOnlyFormatter.date(from: dateString) {
+            return date
+        }
+
+        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string: \(dateString)")
+    }
+
     // MARK: - User Profile
 
     func getUserProfile() async throws -> UserProfileResponse {
@@ -153,7 +182,7 @@ class APIService {
             switch httpResponse.statusCode {
             case 200...299:
                 let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                decoder.dateDecodingStrategy = .custom(APIService.customDateDecoder)
                 return try decoder.decode(T.self, from: data)
             case 401:
                 throw APIError.unauthorized
@@ -370,7 +399,7 @@ struct PhasePrediction: Codable {
 
     enum CodingKeys: String, CodingKey {
         case date
-        case phase
+        case phase = "predicted_phase"
         case cycleDay = "cycle_day"
     }
 }

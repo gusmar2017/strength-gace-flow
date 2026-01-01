@@ -68,13 +68,6 @@ struct OnboardingContainerView: View {
             isLoading = true
             errorMessage = nil
 
-            #if DEBUG
-            // For developer testing, just complete onboarding without API call
-            await MainActor.run {
-                authViewModel.completeOnboarding()
-                isLoading = false
-            }
-            #else
             do {
                 // Calculate averages from dates if provided
                 let (avgCycle, avgPeriod) = calculateAveragesFromDates(cycleDates)
@@ -115,7 +108,7 @@ struct OnboardingContainerView: View {
                             averagePeriodLength: avgPeriod,
                             cycleTrackingEnabled: true,
                             notificationsEnabled: true,
-                            initialCycleDates: nil
+                            initialCycleDates: cycleDates.isEmpty ? nil : cycleDates
                         )
                         _ = try await APIService.shared.createUserProfile(data: createRequest)
                     } else {
@@ -139,7 +132,6 @@ struct OnboardingContainerView: View {
                     isLoading = false
                 }
             }
-            #endif
         }
     }
 
@@ -514,10 +506,10 @@ struct OnboardingCycleView: View {
 
             if cycleDates.isEmpty {
                 VStack(spacing: SGFSpacing.sm) {
-                    Text("Don't remember exact dates?")
+                    Text("Add your most recent cycle start date")
                         .font(.sgfCaption)
                         .foregroundColor(.sgfTextTertiary)
-                    Text("You can skip this and begin tracking whenever you're ready")
+                    Text("Even one date helps us understand your rhythm")
                         .font(.sgfCaption)
                         .foregroundColor(.sgfTextTertiary)
                         .multilineTextAlignment(.center)
@@ -536,11 +528,11 @@ struct OnboardingCycleView: View {
                     .padding(.horizontal, SGFSpacing.lg)
             }
 
-            Button(cycleDates.isEmpty ? "Skip for Now" : "Continue") {
+            Button("Continue") {
                 onComplete()
             }
-            .buttonStyle(SGFPrimaryButtonStyle(isDisabled: isLoading))
-            .disabled(isLoading)
+            .buttonStyle(SGFPrimaryButtonStyle(isDisabled: cycleDates.isEmpty || isLoading))
+            .disabled(cycleDates.isEmpty || isLoading)
             .padding(.horizontal, SGFSpacing.lg)
             .padding(.bottom, SGFSpacing.xl)
         }

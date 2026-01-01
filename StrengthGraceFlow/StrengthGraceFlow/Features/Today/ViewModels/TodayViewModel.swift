@@ -31,11 +31,29 @@ class TodayViewModel: ObservableObject {
         do {
             currentCycle = try await APIService.shared.getCurrentCycle()
 
-            // Show banner if not in menstrual phase and more than 20 days into cycle
+            // Intelligent cycle start prompting based on user's cycle patterns
             if let cycle = currentCycle {
                 let isNotMenstruating = cycle.cycle.currentPhase != "menstrual"
-                let isLateInCycle = cycle.cycle.cycleDay > 20
-                shouldShowLogPeriodBanner = isNotMenstruating && isLateInCycle
+
+                // Calculate days until expected period start
+                let daysUntilExpected = cycle.averageCycleLength - cycle.cycle.cycleDay
+
+                // Get cycle history to determine variability
+                do {
+                    let history = try await APIService.shared.getCycleHistory(limit: 12)
+                    let cycleLengths = history.cycles.compactMap { $0.cycleLength }
+
+                    // Calculate dynamic window size based on cycle variability
+                    let windowSize = calculateCycleVariability(cycleLengths: cycleLengths)
+
+                    // Show banner if within the expected window for period start
+                    let withinExpectedWindow = daysUntilExpected >= -windowSize && daysUntilExpected <= windowSize
+                    shouldShowLogPeriodBanner = isNotMenstruating && withinExpectedWindow
+                } catch {
+                    // Fallback to simple logic if history fetch fails
+                    let isLateInCycle = cycle.cycle.cycleDay > 20
+                    shouldShowLogPeriodBanner = isNotMenstruating && isLateInCycle
+                }
             }
         } catch APIError.notFound {
             // No cycle data yet - show banner to encourage first log
@@ -45,6 +63,36 @@ class TodayViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    /// Calculates the window size for period prompting based on cycle variability
+    /// - Parameter cycleLengths: Array of cycle lengths from history
+    /// - Returns: Window size in days (±2 to ±5 days)
+    private func calculateCycleVariability(cycleLengths: [Int]) -> Int {
+        // Default for first cycle or no data
+        guard !cycleLengths.isEmpty else { return 3 }
+
+        // Return default for only one cycle
+        if cycleLengths.count == 1 {
+            return 3
+        }
+
+        // Calculate standard deviation for 2+ cycles
+        let mean = Double(cycleLengths.reduce(0, +)) / Double(cycleLengths.count)
+        let variance = cycleLengths.map { pow(Double($0) - mean, 2) }.reduce(0, +) / Double(cycleLengths.count)
+        let standardDeviation = sqrt(variance)
+
+        // Return window size based on regularity
+        switch standardDeviation {
+        case ...1.0:
+            return 2  // Very regular: ±2 days
+        case 1.0...2.0:
+            return 3  // Moderately regular: ±3 days
+        case 2.0...4.0:
+            return 4  // Somewhat irregular: ±4 days
+        default:
+            return 5  // Very irregular: ±5 days
+        }
     }
 
     func logPeriod(date: Date, notes: String?) async {
