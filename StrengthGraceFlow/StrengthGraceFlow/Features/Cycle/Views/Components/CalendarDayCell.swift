@@ -27,7 +27,13 @@ struct CalendarDayCell: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(phaseColor ?? Color.clear)
 
-                // Today indicator
+                // Cycle start indicator - ring around the cell
+                if isCycleStart {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.sgfMenstrual, lineWidth: 2.5)
+                }
+
+                // Today indicator (overlays on top of cycle start if both apply)
                 if isToday {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.sgfPrimary, lineWidth: 2)
@@ -37,12 +43,13 @@ struct CalendarDayCell: View {
                     Text(dateFormatter.string(from: date))
                         .font(.sgfSubheadline)
                         .foregroundColor(.sgfTextPrimary)
+                        .fontWeight(isCycleStart ? .semibold : .regular)
 
-                    // Cycle start indicator
+                    // Small dot indicator for cycle start
                     if isCycleStart {
                         Circle()
                             .fill(Color.sgfMenstrual)
-                            .frame(width: 6, height: 6)
+                            .frame(width: 5, height: 5)
                     }
                 }
             }

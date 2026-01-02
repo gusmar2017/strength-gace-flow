@@ -176,11 +176,11 @@ async def get_cycle_predictions(
     days_ahead: int = 30,
 ) -> tuple[list[PhasePrediction], Optional[date]]:
     """
-    Get cycle phase predictions for upcoming days.
+    Get cycle phase predictions for upcoming days and full historical cycles.
 
     Args:
         user_id: Firebase user UID
-        days_ahead: Number of days to predict
+        days_ahead: Number of days to predict forward
 
     Returns:
         Tuple of (predictions list, estimated next period date)
@@ -193,11 +193,20 @@ async def get_cycle_predictions(
         user.last_period_start_date, datetime
     ) else user.last_period_start_date
 
+    # Get all cycle history to determine how far back to predict
+    cycles = await get_cycle_history(user_id, limit=24)
+
+    # Find the earliest cycle start date
+    earliest_cycle_date = None
+    if cycles:
+        earliest_cycle_date = min(cycle.start_date for cycle in cycles if cycle.start_date)
+
     predictions = predict_phases(
         last_period_start=last_period,
         average_cycle_length=user.average_cycle_length,
         average_period_length=user.average_period_length,
         days_ahead=days_ahead,
+        earliest_cycle_date=earliest_cycle_date,
     )
 
     next_period = estimate_next_period(

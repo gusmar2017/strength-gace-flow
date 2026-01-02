@@ -97,24 +97,52 @@ def predict_phases(
     average_cycle_length: int = 28,
     average_period_length: int = 5,
     days_ahead: int = 30,
+    earliest_cycle_date: Optional[date] = None,
 ) -> list[PhasePrediction]:
     """
-    Predict cycle phases for upcoming days.
+    Predict cycle phases for upcoming days and full historical cycles.
+
+    Generates predictions for:
+    - All historical cycles from earliest logged cycle (or 90 days back as fallback)
+    - Future days up to 3 days after next predicted period start
 
     Args:
         last_period_start: First day of the most recent period
         average_cycle_length: User's average cycle length
         average_period_length: User's average period length
-        days_ahead: Number of days to predict
+        days_ahead: Number of days to predict forward (will be capped at next period + 3 days)
+        earliest_cycle_date: Earliest logged cycle date (for full history)
 
     Returns:
-        List of phase predictions
+        List of phase predictions including full historical and future dates
     """
     predictions = []
     today = date.today()
 
-    for i in range(days_ahead):
-        target_date = today + timedelta(days=i)
+    # Calculate next period start date
+    next_period_start = estimate_next_period(
+        last_period_start=last_period_start,
+        average_cycle_length=average_cycle_length,
+    )
+
+    # Limit future predictions to 3 days after next period start
+    # This prevents showing too many future cycles on the calendar
+    max_prediction_date = next_period_start + timedelta(days=3)
+    max_future_days = (max_prediction_date - today).days + 1
+    effective_future_days = min(days_ahead, max_future_days)
+
+    # Determine start date for historical predictions
+    if earliest_cycle_date:
+        # Use actual earliest cycle date for full history
+        start_date = earliest_cycle_date
+    else:
+        # Fallback: 90 days back if no cycle history available
+        start_date = today - timedelta(days=90)
+
+    # Generate predictions from earliest date to future
+    total_days = (today - start_date).days + effective_future_days
+    for i in range(total_days):
+        target_date = start_date + timedelta(days=i)
         cycle_info = calculate_current_phase(
             last_period_start=last_period_start,
             average_cycle_length=average_cycle_length,
