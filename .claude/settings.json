@@ -1,6 +1,7 @@
 {
   "model": "sonnet",
   "permissions": {
+    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(npm:*)",
       "Bash(npx:*)",
@@ -33,7 +34,8 @@
       "Bash(black:*)",
       "Bash(isort:*)",
       "Read(*)",
-      "Write(*)"
+      "Write(*)",
+      "Edit(*)"
     ],
     "deny": []
   },
