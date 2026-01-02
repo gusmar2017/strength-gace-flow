@@ -14,8 +14,14 @@ class TodayViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var shouldShowLogPeriodBanner = false
+    @Published var shouldShowEndPeriodButton = false
+    @Published var currentCycleId: String?
     @Published var todayEnergyLevel: Int?
     @Published var isSavingEnergy = false
+
+    var periodStartDate: Date {
+        return currentCycle?.lastPeriodStart ?? Date()
+    }
 
     init() {
         Task {
@@ -38,7 +44,7 @@ class TodayViewModel: ObservableObject {
                 // Calculate days until expected period start
                 let daysUntilExpected = cycle.averageCycleLength - cycle.cycle.cycleDay
 
-                // Get cycle history to determine variability
+                // Get cycle history to determine variability and check for period end button
                 do {
                     let history = try await APIService.shared.getCycleHistory(limit: 12)
                     let cycleLengths = history.cycles.compactMap { $0.cycleLength }
@@ -49,20 +55,51 @@ class TodayViewModel: ObservableObject {
                     // Show banner if within the expected window for period start
                     let withinExpectedWindow = daysUntilExpected >= -windowSize && daysUntilExpected <= windowSize
                     shouldShowLogPeriodBanner = isNotMenstruating && withinExpectedWindow
+
+                    // Check if we should show the "End Period" button
+                    if let currentCycleData = history.cycles.first {
+                        currentCycleId = currentCycleData.id
+                        let hasPeriodEndDate = currentCycleData.periodEndDate != nil
+
+                        shouldShowEndPeriodButton = NotificationManager.shared.shouldShowPeriodEndPrompt(
+                            for: currentCycleData.id
+                        ) && cycle.cycle.currentPhase == "menstrual"
+                            && !hasPeriodEndDate
+                            && isDatePastExpectedEnd(
+                                periodStart: cycle.lastPeriodStart,
+                                avgPeriodLength: cycle.averagePeriodLength
+                            )
+                    }
                 } catch {
                     // Fallback to simple logic if history fetch fails
                     let isLateInCycle = cycle.cycle.cycleDay > 20
                     shouldShowLogPeriodBanner = isNotMenstruating && isLateInCycle
+                    shouldShowEndPeriodButton = false
                 }
             }
         } catch APIError.notFound {
             // No cycle data yet - show banner to encourage first log
             shouldShowLogPeriodBanner = true
+            shouldShowEndPeriodButton = false
         } catch {
             errorMessage = error.localizedDescription
         }
 
         isLoading = false
+    }
+
+    /// Check if today is past the expected period end date + 1 day
+    private func isDatePastExpectedEnd(periodStart: Date, avgPeriodLength: Int) -> Bool {
+        let calendar = Calendar.current
+        guard let expectedEndDate = calendar.date(byAdding: .day, value: avgPeriodLength, to: periodStart),
+              let promptDate = calendar.date(byAdding: .day, value: 1, to: expectedEndDate) else {
+            return false
+        }
+
+        let today = calendar.startOfDay(for: Date())
+        let prompt = calendar.startOfDay(for: promptDate)
+
+        return today >= prompt
     }
 
     /// Calculates the window size for period prompting based on cycle variability
@@ -105,6 +142,49 @@ class TodayViewModel: ObservableObject {
                 notes: notes?.isEmpty == false ? notes : nil
             )
             shouldShowLogPeriodBanner = false
+
+            // Schedule period end notifications
+            if let cycle = currentCycle {
+                // Get the current cycle ID to schedule notifications
+                do {
+                    let history = try await APIService.shared.getCycleHistory(limit: 1)
+                    if let cycleId = history.cycles.first?.id {
+                        await NotificationManager.shared.schedulePeriodEndNotifications(
+                            periodStartDate: date,
+                            avgPeriodLength: cycle.averagePeriodLength,
+                            cycleId: cycleId
+                        )
+                    }
+                } catch {
+                    // Notification scheduling is non-critical, don't fail the whole operation
+                    print("Failed to schedule notifications: \(error.localizedDescription)")
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
+    func endPeriod(date: Date) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            currentCycle = try await APIService.shared.endCurrentPeriod(endDate: date)
+
+            // Increment attempt count and cancel notifications
+            if let cycleId = currentCycleId {
+                NotificationManager.shared.incrementAttemptCount(for: cycleId)
+                await NotificationManager.shared.cancelPeriodEndNotifications()
+            }
+
+            // Hide the button
+            shouldShowEndPeriodButton = false
+
+            // Reload cycle info to update UI
+            await loadCycleInfo()
         } catch {
             errorMessage = error.localizedDescription
         }

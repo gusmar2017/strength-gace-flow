@@ -2,6 +2,8 @@
 Cycle tracking API endpoints.
 """
 
+from datetime import date
+
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.middleware.auth import CurrentUser
@@ -65,6 +67,37 @@ async def log_period_start(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate cycle info after logging period.",
+        )
+
+    return cycle_info
+
+
+@router.post("/end-period", response_model=CycleInfoResponse)
+async def end_current_period(
+    user: CurrentUser,
+    end_date: date = Query(..., description="Date when period ended (YYYY-MM-DD)"),
+):
+    """
+    Mark the end date of the current period.
+
+    Finds the current open cycle and sets its period_end_date.
+    Validates that end_date is after the cycle start date and not in the future.
+    Automatically recalculates average period length from historical data.
+
+    Returns updated cycle info with recalculated averages.
+    """
+    try:
+        cycle_info = await cycle_service.end_current_period(user.uid, end_date)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    if cycle_info is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No open cycle found. Please log a period first.",
         )
 
     return cycle_info

@@ -116,6 +116,9 @@ struct OnboardingContainerView: View {
                     }
                 }
 
+                // Request notification authorization (non-blocking)
+                await NotificationManager.shared.requestAuthorization()
+
                 // Complete onboarding in auth view model
                 await MainActor.run {
                     authViewModel.completeOnboarding()

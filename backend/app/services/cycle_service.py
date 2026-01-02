@@ -320,8 +320,29 @@ async def recalculate_and_update_averages(user_id: str) -> tuple[int, int]:
     else:
         avg_cycle_length = 28  # default
 
-    # Period length calculation (future enhancement)
-    avg_period_length = 5  # default for now
+    # Calculate average period length from cycles with period_end_date set
+    cycles_with_period_end = [
+        c for c in cycles
+        if c.period_end_date is not None and c.start_date is not None
+    ]
+
+    if cycles_with_period_end:
+        # Calculate period lengths: period_end_date - start_date
+        period_lengths = [
+            (c.period_end_date - c.start_date).days
+            for c in cycles_with_period_end
+        ]
+
+        # Filter outliers: only include 2-10 day periods
+        valid_period_lengths = [
+            length for length in period_lengths
+            if 2 <= length <= 10
+        ]
+
+        # Calculate median from valid periods, fall back to 5 if no valid data
+        avg_period_length = calculate_median(valid_period_lengths) if valid_period_lengths else 5
+    else:
+        avg_period_length = 5  # default
 
     # Update user profile
     db = get_firestore_client()
@@ -333,6 +354,62 @@ async def recalculate_and_update_averages(user_id: str) -> tuple[int, int]:
     })
 
     return avg_cycle_length, avg_period_length
+
+
+async def end_current_period(user_id: str, end_date: date) -> Optional[CycleInfoResponse]:
+    """
+    Mark the end date of the current open period.
+
+    Finds the current open cycle (end_date = None) and sets its period_end_date.
+    Validates that end_date is after start_date and not in the future.
+    Automatically recalculates averages.
+
+    Args:
+        user_id: Firebase user UID
+        end_date: Date when period ended
+
+    Returns:
+        Updated CycleInfoResponse or None if no open cycle found
+
+    Raises:
+        ValueError: If validation fails
+    """
+    db = get_firestore_client()
+    cycles_ref = db.collection("users").document(user_id).collection("cycleData")
+
+    # Find the current open cycle
+    query = cycles_ref.where("end_date", "==", None).limit(1)
+    current_cycle = None
+    cycle_id = None
+
+    for doc in query.stream():
+        current_cycle = doc.to_dict()
+        cycle_id = doc.id
+        break
+
+    if not current_cycle or not cycle_id:
+        return None
+
+    # Get start_date for validation
+    start_date = current_cycle["start_date"].date() if current_cycle.get("start_date") else None
+    if not start_date:
+        raise ValueError("Cycle has no start date")
+
+    # Validation: end_date must be after start_date
+    if end_date <= start_date:
+        raise ValueError("Period end date must be after start date")
+
+    # Validation: end_date cannot be in the future
+    today = date.today()
+    if end_date > today:
+        raise ValueError("Period end date cannot be in the future")
+
+    # Update the cycle with period_end_date
+    update_request = UpdateCycleRequest(period_end_date=end_date)
+    await update_cycle_entry(user_id, cycle_id, update_request)
+
+    # Return updated cycle info
+    return await get_current_cycle_info(user_id)
 
 
 async def update_cycle_entry(

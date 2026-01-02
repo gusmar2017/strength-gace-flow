@@ -127,7 +127,9 @@ struct CycleCalendarView: View {
                 CycleDaySummarySheet(
                     date: selectedDate,
                     cycleDates: viewModel.cycleDates,
-                    predictions: viewModel.predictions
+                    cycleHistory: viewModel.cycleHistory,
+                    predictions: viewModel.predictions,
+                    viewModel: viewModel
                 )
             }
             .task {
@@ -336,8 +338,11 @@ struct AddCycleDateSheet: View {
 struct CycleDaySummarySheet: View {
     let date: Date
     let cycleDates: [Date]
+    let cycleHistory: [CycleData]
     let predictions: [PhasePrediction]
+    @ObservedObject var viewModel: CycleCalendarViewModel
     @Environment(\.dismiss) var dismiss
+    @State private var showingEndPeriodAlert = false
 
     private let calendar = Calendar.current
 
@@ -356,6 +361,33 @@ struct CycleDaySummarySheet: View {
 
         let days = calendar.dateComponents([.day], from: mostRecentStart, to: date).day ?? 0
         return days + 1
+    }
+
+    private var currentCycleForDate: CycleData? {
+        // Find the cycle that this date belongs to
+        let sortedCycles = cycleHistory.sorted { $0.startDate > $1.startDate }
+        return sortedCycles.first { cycle in
+            cycle.startDate <= date
+        }
+    }
+
+    private var shouldShowEndPeriodButton: Bool {
+        // Show if:
+        // - Date is in menstrual phase
+        // - Date is not in the future
+        // - Current cycle has no period_end_date set
+        guard !isFutureDate else { return false }
+
+        guard let info = phaseInfo, info.phase == "Menstrual Phase" else {
+            return false
+        }
+
+        guard let cycle = currentCycleForDate else {
+            return false
+        }
+
+        // Don't show if period end date already set
+        return cycle.periodEndDate == nil
     }
 
     private var phaseInfo: (phase: String, color: Color, description: String)? {
@@ -384,13 +416,20 @@ struct CycleDaySummarySheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: SGFSpacing.lg) {
-                // Date Header
-                VStack(spacing: SGFSpacing.xs) {
+        VStack(spacing: SGFSpacing.lg) {
+            // Drag indicator spacer
+            Color.clear.frame(height: SGFSpacing.md)
+
+            // Cycle Day Info
+            if let day = cycleDay {
+                VStack(spacing: SGFSpacing.sm) {
+                    Text("Day \(day)")
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .foregroundColor(.sgfPrimary)
+
                     Text(dateFormatter.string(from: date))
-                        .font(.sgfTitle2)
-                        .foregroundColor(.sgfTextPrimary)
+                        .font(.sgfSubheadline)
+                        .foregroundColor(.sgfTextSecondary)
 
                     if isFutureDate {
                         Text("Future Date")
@@ -398,80 +437,95 @@ struct CycleDaySummarySheet: View {
                             .foregroundColor(.sgfTextTertiary)
                     }
                 }
-                .padding(.top, SGFSpacing.lg)
+                .padding(.vertical, SGFSpacing.xs)
+            } else {
+                VStack(spacing: SGFSpacing.sm) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 36))
+                        .foregroundColor(.sgfTextTertiary)
 
-                Divider()
+                    Text("No cycle data for this date")
+                        .font(.sgfSubheadline)
+                        .foregroundColor(.sgfTextSecondary)
 
-                // Cycle Day Info
-                if let day = cycleDay {
-                    VStack(spacing: SGFSpacing.sm) {
-                        Text("Day \(day)")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundColor(.sgfPrimary)
-
-                        Text("of your cycle")
-                            .font(.sgfSubheadline)
-                            .foregroundColor(.sgfTextSecondary)
-                    }
-                    .padding(.vertical, SGFSpacing.md)
-                } else {
-                    VStack(spacing: SGFSpacing.sm) {
-                        Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.system(size: 36))
-                            .foregroundColor(.sgfTextTertiary)
-
-                        Text("No cycle data for this date")
-                            .font(.sgfSubheadline)
-                            .foregroundColor(.sgfTextSecondary)
-
-                        Text("Log more cycle starts to see predictions")
-                            .font(.sgfCaption)
-                            .foregroundColor(.sgfTextTertiary)
-                    }
-                    .padding(.vertical, SGFSpacing.md)
+                    Text("Log more cycle starts to see predictions")
+                        .font(.sgfCaption)
+                        .foregroundColor(.sgfTextTertiary)
                 }
+                .padding(.vertical, SGFSpacing.md)
+            }
 
-                // Phase Info
-                if let info = phaseInfo {
-                    VStack(alignment: .leading, spacing: SGFSpacing.md) {
-                        HStack {
-                            Circle()
-                                .fill(info.color)
-                                .frame(width: 12, height: 12)
+            // Phase Info
+            if let info = phaseInfo {
+                VStack(alignment: .leading, spacing: SGFSpacing.md) {
+                    HStack {
+                        Circle()
+                            .fill(info.color)
+                            .frame(width: 12, height: 12)
 
-                            Text(info.phase)
-                                .font(.sgfHeadline)
-                                .foregroundColor(.sgfTextPrimary)
-                        }
-
-                        Text(info.description)
-                            .font(.sgfBody)
-                            .foregroundColor(.sgfTextSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineLimit(nil)
+                        Text(info.phase)
+                            .font(.sgfHeadline)
+                            .foregroundColor(.sgfTextPrimary)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(info.description)
+                        .font(.sgfBody)
+                        .foregroundColor(.sgfTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(nil)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(SGFSpacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                        .fill(info.color.opacity(0.1))
+                )
+            }
+
+            // Mark as Period End Date button
+            if shouldShowEndPeriodButton {
+                Button {
+                    showingEndPeriodAlert = true
+                } label: {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+
+                        Text("Mark as Period End Date")
+                            .font(.sgfSubheadline)
+                            .fontWeight(.semibold)
+
+                        Spacer()
+                    }
+                    .foregroundColor(.white)
                     .padding(SGFSpacing.md)
                     .background(
                         RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                            .fill(info.color.opacity(0.1))
+                            .fill(Color.sgfPrimary)
                     )
                 }
-
-                Spacer()
             }
-            .padding(.horizontal, SGFSpacing.lg)
-            .background(Color.sgfBackground)
-            .navigationTitle("Cycle Summary")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                        .foregroundColor(.sgfPrimary)
+
+            Spacer()
+        }
+        .padding(.horizontal, SGFSpacing.lg)
+        .padding(.top, SGFSpacing.md)
+        .background(Color.sgfBackground)
+        .alert("Mark Period End Date", isPresented: $showingEndPeriodAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm") {
+                Task {
+                    if let cycle = currentCycleForDate {
+                        await viewModel.endPeriod(date: date, cycleId: cycle.id)
+                        dismiss()
+                    }
                 }
             }
+        } message: {
+            Text("Mark \(dateFormatter.string(from: date)) as the last day of your period?")
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.fraction(0.5), .large])
+        .presentationDragIndicator(.visible)
     }
 }
 

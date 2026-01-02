@@ -10,6 +10,7 @@ import Foundation
 @MainActor
 class CycleCalendarViewModel: ObservableObject {
     @Published var cycleDates: [Date] = []
+    @Published var cycleHistory: [CycleData] = []
     @Published var predictions: [PhasePrediction] = []
     @Published var nextPeriodDate: Date?
     @Published var isLoading = false
@@ -34,6 +35,7 @@ class CycleCalendarViewModel: ObservableObject {
         // Load cycle history (essential)
         do {
             let historyResponse = try await apiService.getCycleHistory(limit: 24)
+            cycleHistory = historyResponse.cycles
             cycleDates = historyResponse.cycles.map { $0.startDate }
         } catch {
             errorMessage = "Failed to load cycle history: \(error.localizedDescription)"
@@ -59,6 +61,26 @@ class CycleCalendarViewModel: ObservableObject {
             // Normalize to midnight UTC (backend requires exact dates)
             let normalizedDate = dateToMidnightUTC(date)
             _ = try await apiService.logPeriod(startDate: normalizedDate, notes: nil)
+            await loadCalendarData() // Reload to update calendar
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
+    func endPeriod(date: Date, cycleId: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let normalizedDate = dateToMidnightUTC(date)
+            _ = try await apiService.endCurrentPeriod(endDate: normalizedDate)
+
+            // Increment attempt count and cancel notifications
+            NotificationManager.shared.incrementAttemptCount(for: cycleId)
+            await NotificationManager.shared.cancelPeriodEndNotifications()
+
             await loadCalendarData() // Reload to update calendar
         } catch {
             errorMessage = error.localizedDescription

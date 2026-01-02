@@ -124,6 +124,18 @@ class APIService {
         )
     }
 
+    func endCurrentPeriod(endDate: Date) async throws -> CycleInfoResponse {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
+        let dateString = dateFormatter.string(from: endDate)
+
+        return try await request(
+            endpoint: "/api/v1/cycle/end-period?end_date=\(dateString)",
+            method: "POST"
+        )
+    }
+
     // MARK: - Recommendations (Basic - will expand later)
 
     func getTodayRecommendations() async throws -> DailyRecommendationResponse {
@@ -370,6 +382,7 @@ struct CycleData: Codable {
     let id: String
     let startDate: Date
     let endDate: Date?
+    let periodEndDate: Date?
     let cycleLength: Int?
     let notes: String?
 
@@ -377,6 +390,7 @@ struct CycleData: Codable {
         case id
         case startDate = "start_date"
         case endDate = "end_date"
+        case periodEndDate = "period_end_date"
         case cycleLength = "cycle_length"
         case notes
     }
