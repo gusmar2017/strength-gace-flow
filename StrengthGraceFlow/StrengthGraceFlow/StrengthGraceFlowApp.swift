@@ -40,10 +40,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     ) {
         let userInfo = response.notification.request.content.userInfo
 
-        // Check if this is a period end notification
-        if let type = userInfo["type"] as? String, type == "period_end" {
-            // Post notification to show period end prompt in UI
-            NotificationCenter.default.post(name: NSNotification.Name("ShowPeriodEndPrompt"), object: nil)
+        // Check if this is a period start notification
+        if let type = userInfo["type"] as? String, type == "period_start" {
+            // Post notification to show period start dialog in UI
+            NotificationCenter.default.post(name: NSNotification.Name("ShowPeriodStartDialog"), object: nil)
         }
 
         completionHandler()

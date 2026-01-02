@@ -342,7 +342,6 @@ struct CycleDaySummarySheet: View {
     let predictions: [PhasePrediction]
     @ObservedObject var viewModel: CycleCalendarViewModel
     @Environment(\.dismiss) var dismiss
-    @State private var showingEndPeriodAlert = false
 
     private let calendar = Calendar.current
 
@@ -369,25 +368,6 @@ struct CycleDaySummarySheet: View {
         return sortedCycles.first { cycle in
             cycle.startDate <= date
         }
-    }
-
-    private var shouldShowEndPeriodButton: Bool {
-        // Show if:
-        // - Date is in menstrual phase
-        // - Date is not in the future
-        // - Current cycle has no period_end_date set
-        guard !isFutureDate else { return false }
-
-        guard let info = phaseInfo, info.phase == "Menstrual Phase" else {
-            return false
-        }
-
-        guard let cycle = currentCycleForDate else {
-            return false
-        }
-
-        // Don't show if period end date already set
-        return cycle.periodEndDate == nil
     }
 
     private var phaseInfo: (phase: String, color: Color, description: String)? {
@@ -482,48 +462,11 @@ struct CycleDaySummarySheet: View {
                 )
             }
 
-            // Mark as Period End Date button
-            if shouldShowEndPeriodButton {
-                Button {
-                    showingEndPeriodAlert = true
-                } label: {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
-
-                        Text("Mark as Period End Date")
-                            .font(.sgfSubheadline)
-                            .fontWeight(.semibold)
-
-                        Spacer()
-                    }
-                    .foregroundColor(.white)
-                    .padding(SGFSpacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                            .fill(Color.sgfPrimary)
-                    )
-                }
-            }
-
             Spacer()
         }
         .padding(.horizontal, SGFSpacing.lg)
         .padding(.top, SGFSpacing.md)
         .background(Color.sgfBackground)
-        .alert("Mark Period End Date", isPresented: $showingEndPeriodAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Confirm") {
-                Task {
-                    if let cycle = currentCycleForDate {
-                        await viewModel.endPeriod(date: date, cycleId: cycle.id)
-                        dismiss()
-                    }
-                }
-            }
-        } message: {
-            Text("Mark \(dateFormatter.string(from: date)) as the last day of your period?")
-        }
         .presentationDetents([.fraction(0.5), .large])
         .presentationDragIndicator(.visible)
     }

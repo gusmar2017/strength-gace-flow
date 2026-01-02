@@ -10,7 +10,7 @@ import SwiftUI
 struct TodayView: View {
     @StateObject private var viewModel = TodayViewModel()
     @State private var showingLogPeriod = false
-    @State private var showingEndPeriod = false
+    @State private var showingPeriodStartDialog = false
     @State private var currentPhase: CyclePhase = .follicular
     @State private var cycleDay = 8
 
@@ -18,18 +18,26 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: SGFSpacing.lg) {
+                    // Enable notifications banner (show if disabled)
+                    if viewModel.shouldShowEnableNotificationsBanner {
+                        EnableNotificationsBanner(
+                            authStatus: viewModel.notificationAuthStatus,
+                            onEnable: {
+                                Task {
+                                    await viewModel.enableNotifications()
+                                }
+                            },
+                            onDismiss: {
+                                viewModel.dismissNotificationBanner()
+                            }
+                        )
+                        .padding(.horizontal, SGFSpacing.lg)
+                    }
+
                     // Log period banner (show if needed)
                     if viewModel.shouldShowLogPeriodBanner {
                         LogPeriodBanner {
                             showingLogPeriod = true
-                        }
-                        .padding(.horizontal, SGFSpacing.lg)
-                    }
-
-                    // End period button (show if needed)
-                    if viewModel.shouldShowEndPeriodButton {
-                        EndPeriodBanner {
-                            showingEndPeriod = true
                         }
                         .padding(.horizontal, SGFSpacing.lg)
                     }
@@ -61,11 +69,21 @@ struct TodayView: View {
             .sheet(isPresented: $showingLogPeriod) {
                 LogPeriodSheet(viewModel: viewModel)
             }
-            .sheet(isPresented: $showingEndPeriod) {
-                EndPeriodSheet(viewModel: viewModel)
+            .alert("Period Check-In 💜", isPresented: $showingPeriodStartDialog) {
+                Button("Not Yet", role: .cancel) { }
+                Button("Yes, Log Period") {
+                    showingLogPeriod = true
+                }
+            } message: {
+                Text("Has your period started? Logging it helps us keep your cycle insights accurate and personalized.")
             }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowPeriodEndPrompt"))) { _ in
-                showingEndPeriod = true
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowPeriodStartDialog"))) { _ in
+                showingPeriodStartDialog = true
+            }
+            .onAppear {
+                Task {
+                    await viewModel.checkNotificationStatus()
+                }
             }
         }
     }
@@ -112,6 +130,82 @@ struct LogPeriodBanner: View {
     }
 }
 
+// MARK: - Enable Notifications Banner
+
+struct EnableNotificationsBanner: View {
+    let authStatus: UNAuthorizationStatus
+    let onEnable: () -> Void
+    let onDismiss: () -> Void
+
+    private var buttonText: String {
+        authStatus == .denied ? "Open Settings" : "Enable"
+    }
+
+    private var subtitleText: String {
+        if authStatus == .denied {
+            return "Tap to update in Settings"
+        } else {
+            return "Stay on track with helpful check-ins"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: SGFSpacing.md) {
+            Image(systemName: "bell.badge.fill")
+                .font(.title2)
+                .foregroundColor(.sgfPrimary)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Get period reminders")
+                    .font(.sgfSubheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.sgfTextPrimary)
+
+                Text(subtitleText)
+                    .font(.sgfCaption)
+                    .foregroundColor(.sgfTextSecondary)
+            }
+
+            Spacer()
+
+            HStack(spacing: SGFSpacing.sm) {
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption)
+                        .foregroundColor(.sgfTextTertiary)
+                        .padding(8)
+                }
+
+                Button {
+                    onEnable()
+                } label: {
+                    Text(buttonText)
+                        .font(.sgfCaption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, SGFSpacing.md)
+                        .padding(.vertical, SGFSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: SGFCornerRadius.sm)
+                                .fill(Color.sgfPrimary)
+                        )
+                }
+            }
+        }
+        .padding(SGFSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                .fill(Color.sgfPrimary.opacity(0.1))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                .stroke(Color.sgfPrimary.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
 // MARK: - Log Period Sheet
 
 struct LogPeriodSheet: View {
@@ -154,107 +248,6 @@ struct LogPeriodSheet: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - End Period Banner
-
-struct EndPeriodBanner: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: SGFSpacing.md) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.sgfPrimary)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Has your period ended?")
-                        .font(.sgfSubheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.sgfTextPrimary)
-
-                    Text("Tap to log your period end date")
-                        .font(.sgfCaption)
-                        .foregroundColor(.sgfTextSecondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.sgfTextTertiary)
-            }
-            .padding(SGFSpacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                    .fill(Color.sgfPrimary.opacity(0.1))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                    .stroke(Color.sgfPrimary.opacity(0.3), lineWidth: 1)
-            )
-        }
-    }
-}
-
-// MARK: - End Period Sheet
-
-struct EndPeriodSheet: View {
-    @ObservedObject var viewModel: TodayViewModel
-    @Environment(\.dismiss) var dismiss
-    @State private var selectedDate = Date()
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: SGFSpacing.lg) {
-                VStack(spacing: SGFSpacing.sm) {
-                    Image(systemName: "calendar.badge.checkmark")
-                        .font(.system(size: 48))
-                        .foregroundColor(.sgfPrimary)
-
-                    Text("When did your period end?")
-                        .font(.sgfTitle3)
-                        .foregroundColor(.sgfTextPrimary)
-
-                    Text("Select the last day of your period")
-                        .font(.sgfCaption)
-                        .foregroundColor(.sgfTextSecondary)
-                }
-                .padding(.top, SGFSpacing.lg)
-
-                DatePicker(
-                    "End Date",
-                    selection: $selectedDate,
-                    in: viewModel.periodStartDate...Date(),
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .padding(.horizontal, SGFSpacing.md)
-
-                Spacer()
-            }
-            .background(Color.sgfBackground)
-            .navigationTitle("Period End Date")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .foregroundColor(.sgfTextSecondary)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task {
-                            await viewModel.endPeriod(date: selectedDate)
-                            dismiss()
-                        }
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(.sgfPrimary)
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
     }
 }
 

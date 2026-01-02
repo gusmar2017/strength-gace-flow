@@ -60,26 +60,22 @@ class CycleCalendarViewModel: ObservableObject {
         do {
             // Normalize to midnight UTC (backend requires exact dates)
             let normalizedDate = dateToMidnightUTC(date)
-            _ = try await apiService.logPeriod(startDate: normalizedDate, notes: nil)
-            await loadCalendarData() // Reload to update calendar
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+            let cycleInfo = try await apiService.logPeriod(startDate: normalizedDate, notes: nil)
 
-        isLoading = false
-    }
-
-    func endPeriod(date: Date, cycleId: String) async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let normalizedDate = dateToMidnightUTC(date)
-            _ = try await apiService.endCurrentPeriod(endDate: normalizedDate)
-
-            // Increment attempt count and cancel notifications
-            NotificationManager.shared.incrementAttemptCount(for: cycleId)
-            await NotificationManager.shared.cancelPeriodEndNotifications()
+            // Schedule period start reminder notifications
+            do {
+                let history = try await apiService.getCycleHistory(limit: 1)
+                if let cycleId = history.cycles.first?.id {
+                    await NotificationManager.shared.schedulePeriodStartNotifications(
+                        periodStartDate: normalizedDate,
+                        avgCycleLength: cycleInfo.averageCycleLength,
+                        cycleId: cycleId
+                    )
+                }
+            } catch {
+                // Notification scheduling is non-critical, don't fail the whole operation
+                print("Failed to schedule notifications: \(error.localizedDescription)")
+            }
 
             await loadCalendarData() // Reload to update calendar
         } catch {

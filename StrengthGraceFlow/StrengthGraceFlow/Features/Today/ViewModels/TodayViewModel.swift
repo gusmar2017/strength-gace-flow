@@ -14,20 +14,55 @@ class TodayViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var shouldShowLogPeriodBanner = false
-    @Published var shouldShowEndPeriodButton = false
-    @Published var currentCycleId: String?
+    @Published var shouldShowEnableNotificationsBanner = false
+    @Published var notificationAuthStatus: UNAuthorizationStatus = .notDetermined
     @Published var todayEnergyLevel: Int?
     @Published var isSavingEnergy = false
-
-    var periodStartDate: Date {
-        return currentCycle?.lastPeriodStart ?? Date()
-    }
 
     init() {
         Task {
             await loadCycleInfo()
             await loadTodayEnergy()
+            await checkNotificationStatus()
         }
+    }
+
+    func checkNotificationStatus() async {
+        notificationAuthStatus = await NotificationManager.shared.getAuthorizationStatus()
+
+        // Show banner if notifications are not authorized or not determined
+        shouldShowEnableNotificationsBanner = (notificationAuthStatus == .denied || notificationAuthStatus == .notDetermined)
+    }
+
+    func enableNotifications() async {
+        if notificationAuthStatus == .notDetermined {
+            // User hasn't been asked yet - show in-app permission dialog
+            let granted = await NotificationManager.shared.requestAuthorization()
+            if granted {
+                print("✅ User granted notification permission")
+            } else {
+                print("❌ User denied notification permission")
+            }
+            // Recheck status after user makes decision
+            await checkNotificationStatus()
+        } else if notificationAuthStatus == .denied {
+            // User previously denied - must go to Settings
+            openNotificationSettings()
+        }
+    }
+
+    func openNotificationSettings() {
+        guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else {
+            return
+        }
+
+        if UIApplication.shared.canOpenURL(settingsUrl) {
+            UIApplication.shared.open(settingsUrl)
+        }
+    }
+
+    func dismissNotificationBanner() {
+        shouldShowEnableNotificationsBanner = false
     }
 
     func loadCycleInfo() async {
@@ -55,51 +90,20 @@ class TodayViewModel: ObservableObject {
                     // Show banner if within the expected window for period start
                     let withinExpectedWindow = daysUntilExpected >= -windowSize && daysUntilExpected <= windowSize
                     shouldShowLogPeriodBanner = isNotMenstruating && withinExpectedWindow
-
-                    // Check if we should show the "End Period" button
-                    if let currentCycleData = history.cycles.first {
-                        currentCycleId = currentCycleData.id
-                        let hasPeriodEndDate = currentCycleData.periodEndDate != nil
-
-                        shouldShowEndPeriodButton = NotificationManager.shared.shouldShowPeriodEndPrompt(
-                            for: currentCycleData.id
-                        ) && cycle.cycle.currentPhase == "menstrual"
-                            && !hasPeriodEndDate
-                            && isDatePastExpectedEnd(
-                                periodStart: cycle.lastPeriodStart,
-                                avgPeriodLength: cycle.averagePeriodLength
-                            )
-                    }
                 } catch {
                     // Fallback to simple logic if history fetch fails
                     let isLateInCycle = cycle.cycle.cycleDay > 20
                     shouldShowLogPeriodBanner = isNotMenstruating && isLateInCycle
-                    shouldShowEndPeriodButton = false
                 }
             }
         } catch APIError.notFound {
             // No cycle data yet - show banner to encourage first log
             shouldShowLogPeriodBanner = true
-            shouldShowEndPeriodButton = false
         } catch {
             errorMessage = error.localizedDescription
         }
 
         isLoading = false
-    }
-
-    /// Check if today is past the expected period end date + 1 day
-    private func isDatePastExpectedEnd(periodStart: Date, avgPeriodLength: Int) -> Bool {
-        let calendar = Calendar.current
-        guard let expectedEndDate = calendar.date(byAdding: .day, value: avgPeriodLength, to: periodStart),
-              let promptDate = calendar.date(byAdding: .day, value: 1, to: expectedEndDate) else {
-            return false
-        }
-
-        let today = calendar.startOfDay(for: Date())
-        let prompt = calendar.startOfDay(for: promptDate)
-
-        return today >= prompt
     }
 
     /// Calculates the window size for period prompting based on cycle variability
@@ -143,15 +147,15 @@ class TodayViewModel: ObservableObject {
             )
             shouldShowLogPeriodBanner = false
 
-            // Schedule period end notifications
+            // Schedule period start reminder notifications
             if let cycle = currentCycle {
                 // Get the current cycle ID to schedule notifications
                 do {
                     let history = try await APIService.shared.getCycleHistory(limit: 1)
                     if let cycleId = history.cycles.first?.id {
-                        await NotificationManager.shared.schedulePeriodEndNotifications(
+                        await NotificationManager.shared.schedulePeriodStartNotifications(
                             periodStartDate: date,
-                            avgPeriodLength: cycle.averagePeriodLength,
+                            avgCycleLength: cycle.averageCycleLength,
                             cycleId: cycleId
                         )
                     }
@@ -160,31 +164,6 @@ class TodayViewModel: ObservableObject {
                     print("Failed to schedule notifications: \(error.localizedDescription)")
                 }
             }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    func endPeriod(date: Date) async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            currentCycle = try await APIService.shared.endCurrentPeriod(endDate: date)
-
-            // Increment attempt count and cancel notifications
-            if let cycleId = currentCycleId {
-                NotificationManager.shared.incrementAttemptCount(for: cycleId)
-                await NotificationManager.shared.cancelPeriodEndNotifications()
-            }
-
-            // Hide the button
-            shouldShowEndPeriodButton = false
-
-            // Reload cycle info to update UI
-            await loadCycleInfo()
         } catch {
             errorMessage = error.localizedDescription
         }

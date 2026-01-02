@@ -2,7 +2,7 @@
 //  NotificationManager.swift
 //  StrengthGraceFlow
 //
-//  Manages local notifications for period end tracking
+//  Manages period start reminder notifications
 //
 
 import Foundation
@@ -12,173 +12,221 @@ import UserNotifications
 class NotificationManager {
     static let shared = NotificationManager()
 
-    private let notificationCenter = UNUserNotificationCenter.current()
-
-    // Notification identifiers
-    private let periodEndNotification1ID = "period_end_attempt_1"
-    private let periodEndNotification2ID = "period_end_attempt_2"
-
-    // UserDefaults keys
-    private let attemptsKeyPrefix = "periodEndAttempts_"
+    // MARK: - Test Mode
+    // Set this to true to schedule notifications 1-2 minutes in the future for testing
+    // ⚠️ REMEMBER TO SET BACK TO FALSE BEFORE PRODUCTION
+    var testMode = false
 
     private init() {}
 
     // MARK: - Authorization
 
-    /// Request notification authorization from user
-    func requestAuthorization() async {
+    /// Request notification permission from user
+    func requestAuthorization() async -> Bool {
         do {
-            let granted = try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
-            if granted {
-                print("Notification authorization granted")
-            } else {
-                print("Notification authorization denied")
-            }
+            let granted = try await UNUserNotificationCenter.current().requestAuthorization(
+                options: [.alert, .sound, .badge]
+            )
+            return granted
         } catch {
-            print("Error requesting notification authorization: \(error)")
+            print("Error requesting notification authorization: \(error.localizedDescription)")
+            return false
         }
     }
 
-    /// Check current authorization status
-    func checkAuthorizationStatus() async -> UNAuthorizationStatus {
-        let settings = await notificationCenter.notificationSettings()
+    /// Check current notification authorization status
+    func getAuthorizationStatus() async -> UNAuthorizationStatus {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
         return settings.authorizationStatus
     }
 
-    // MARK: - Period End Notifications
-
-    /// Schedule period end notifications (2 attempts)
-    /// - Parameters:
-    ///   - periodStartDate: The date when the period started
-    ///   - avgPeriodLength: Average period length in days
-    ///   - cycleId: The cycle ID for tracking attempts
-    func schedulePeriodEndNotifications(periodStartDate: Date, avgPeriodLength: Int, cycleId: String) async {
-        // Cancel any existing period end notifications
-        await cancelPeriodEndNotifications()
-
-        // Check authorization
-        let status = await checkAuthorizationStatus()
-        guard status == .authorized else {
-            print("Notifications not authorized, skipping scheduling")
-            return
-        }
-
-        // Calculate expected end date
-        let calendar = Calendar.current
-        guard let expectedEndDate = calendar.date(byAdding: .day, value: avgPeriodLength, to: periodStartDate) else {
-            print("Failed to calculate expected end date")
-            return
-        }
-
-        // Schedule notification 1: (expectedEnd + 1 day) @ 10 AM
-        if let notification1Date = calendar.date(byAdding: .day, value: 1, to: expectedEndDate) {
-            await scheduleNotification(
-                identifier: periodEndNotification1ID,
-                title: "Period End Check-In",
-                body: "Has your period ended? Tap to record your period end date for more accurate predictions.",
-                triggerDate: notification1Date,
-                hour: 10,
-                minute: 0
-            )
-        }
-
-        // Schedule notification 2: (expectedEnd + 3 days) @ 10 AM
-        if let notification2Date = calendar.date(byAdding: .day, value: 3, to: expectedEndDate) {
-            await scheduleNotification(
-                identifier: periodEndNotification2ID,
-                title: "Period End Check-In",
-                body: "Last reminder: Track your period end date to help us personalize your cycle insights.",
-                triggerDate: notification2Date,
-                hour: 10,
-                minute: 0
-            )
-        }
-
-        // Reset attempt count for this cycle
-        resetAttemptCount(for: cycleId)
-
-        print("Scheduled period end notifications for cycle \(cycleId)")
+    /// Check if notifications are enabled
+    func areNotificationsEnabled() async -> Bool {
+        let status = await getAuthorizationStatus()
+        return status == .authorized || status == .provisional
     }
 
-    /// Schedule a single notification at a specific date and time
-    private func scheduleNotification(
-        identifier: String,
-        title: String,
-        body: String,
-        triggerDate: Date,
-        hour: Int,
-        minute: Int
+    // MARK: - Period Start Notifications
+
+    /// Schedule period start reminder notifications
+    /// - Parameters:
+    ///   - periodStartDate: The date when the current period started
+    ///   - avgCycleLength: Average cycle length in days
+    ///   - cycleId: The cycle ID for tracking attempts
+    func schedulePeriodStartNotifications(
+        periodStartDate: Date,
+        avgCycleLength: Int,
+        cycleId: String
     ) async {
-        // Only schedule if the date is in the future
-        guard triggerDate > Date() else {
-            print("Skipping notification \(identifier) - date is in the past")
-            return
+        // Cancel any existing period start notifications
+        await cancelPeriodStartNotifications()
+
+        let attempt1Date: Date
+        let attempt2Date: Date
+
+        if testMode {
+            // TEST MODE: Schedule notifications 1 and 2 minutes from now
+            print("🧪 TEST MODE: Scheduling notifications 1-2 minutes in the future")
+            guard let date1 = Calendar.current.date(byAdding: .minute, value: 1, to: Date()),
+                  let date2 = Calendar.current.date(byAdding: .minute, value: 2, to: Date()) else {
+                print("Failed to calculate test dates")
+                return
+            }
+            attempt1Date = date1
+            attempt2Date = date2
+        } else {
+            // PRODUCTION MODE: Normal scheduling
+            // Calculate predicted next period start
+            guard let predictedStartDate = Calendar.current.date(
+                byAdding: .day,
+                value: avgCycleLength,
+                to: periodStartDate
+            ) else {
+                print("Failed to calculate predicted period start date")
+                return
+            }
+
+            // Schedule Attempt 1: Day AFTER predicted start (+1 day)
+            guard let date1 = Calendar.current.date(
+                byAdding: .day,
+                value: 1,
+                to: predictedStartDate
+            ) else {
+                print("Failed to calculate attempt 1 date")
+                return
+            }
+
+            // Schedule Attempt 2: 3 days after predicted start (+3 days)
+            guard let date2 = Calendar.current.date(
+                byAdding: .day,
+                value: 3,
+                to: predictedStartDate
+            ) else {
+                print("Failed to calculate attempt 2 date")
+                return
+            }
+
+            attempt1Date = date1
+            attempt2Date = date2
         }
 
-        var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: triggerDate)
-        dateComponents.hour = hour
-        dateComponents.minute = minute
+        await scheduleNotification(
+            date: attempt1Date,
+            attemptNumber: 1,
+            cycleId: cycleId
+        )
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        await scheduleNotification(
+            date: attempt2Date,
+            attemptNumber: 2,
+            cycleId: cycleId
+        )
 
+        print("✅ Scheduled 2 period start notifications for cycle \(cycleId)")
+        print("   Attempt 1: \(attempt1Date)")
+        print("   Attempt 2: \(attempt2Date)")
+    }
+
+    /// Schedule a single notification
+    private func scheduleNotification(
+        date: Date,
+        attemptNumber: Int,
+        cycleId: String
+    ) async {
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        content.categoryIdentifier = "PERIOD_END"
-        content.userInfo = ["type": "period_end"]
 
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        // Warm, supportive notification text aligned with brand voice
+        if attemptNumber == 1 {
+            content.title = "Checking in 💜"
+            content.body = "Has your period started? Tap to log and stay in sync with your cycle."
+        } else {
+            content.title = "Period tracking check-in"
+            content.body = "Just checking - time to log your period? Staying consistent helps us support you better."
+        }
+
+        content.sound = .default
+        content.badge = 1
+
+        // Add metadata for notification handling
+        content.userInfo = [
+            "type": "period_start",
+            "cycleId": cycleId,
+            "attemptNumber": attemptNumber
+        ]
+
+        let trigger: UNNotificationTrigger
+
+        if testMode {
+            // TEST MODE: Use time interval trigger (fires in X seconds)
+            let timeInterval = date.timeIntervalSinceNow
+            trigger = UNTimeIntervalNotificationTrigger(
+                timeInterval: max(timeInterval, 1), // Minimum 1 second
+                repeats: false
+            )
+            print("🧪 Notification will fire in \(Int(timeInterval)) seconds")
+        } else {
+            // PRODUCTION MODE: Use calendar trigger (fires at specific date/time)
+            // Set notification time to 9 AM
+            var dateComponents = Calendar.current.dateComponents(
+                [.year, .month, .day],
+                from: date
+            )
+            dateComponents.hour = 9
+            dateComponents.minute = 0
+
+            trigger = UNCalendarNotificationTrigger(
+                dateMatching: dateComponents,
+                repeats: false
+            )
+        }
+
+        let identifier = "period_start_attempt_\(attemptNumber)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
 
         do {
-            try await notificationCenter.add(request)
-            print("Scheduled notification: \(identifier) for \(triggerDate)")
+            try await UNUserNotificationCenter.current().add(request)
+            print("✅ Scheduled notification: \(identifier) for \(date)")
         } catch {
-            print("Error scheduling notification \(identifier): \(error)")
+            print("❌ Error scheduling notification: \(error.localizedDescription)")
         }
     }
 
-    /// Cancel all period end notifications
-    func cancelPeriodEndNotifications() async {
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: [
-            periodEndNotification1ID,
-            periodEndNotification2ID
-        ])
-        print("Cancelled period end notifications")
+    /// Cancel all period start notifications
+    func cancelPeriodStartNotifications() async {
+        let identifiers = [
+            "period_start_attempt_1",
+            "period_start_attempt_2"
+        ]
+
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: identifiers
+        )
+
+        print("🗑️ Cancelled all period start notifications")
     }
 
-    // MARK: - Attempt Tracking
+    /// Check if we should show the period start prompt based on current state
+    /// This is used to determine if we should show UI prompts in the app
+    func shouldShowPeriodStartPrompt(lastPeriodStart: Date, avgCycleLength: Int) -> Bool {
+        let calendar = Calendar.current
 
-    /// Check if we should show the period end prompt for a given cycle
-    /// - Parameter cycleId: The cycle ID to check
-    /// - Returns: True if attempts < 2, false otherwise
-    func shouldShowPeriodEndPrompt(for cycleId: String) -> Bool {
-        let attempts = getAttemptCount(for: cycleId)
-        return attempts < 2
-    }
+        // Calculate predicted next period start
+        guard let predictedStartDate = calendar.date(
+            byAdding: .day,
+            value: avgCycleLength,
+            to: lastPeriodStart
+        ) else {
+            return false
+        }
 
-    /// Increment attempt count for a cycle
-    /// - Parameter cycleId: The cycle ID to increment
-    func incrementAttemptCount(for cycleId: String) {
-        let key = attemptsKeyPrefix + cycleId
-        let currentCount = UserDefaults.standard.integer(forKey: key)
-        UserDefaults.standard.set(currentCount + 1, forKey: key)
-        print("Incremented attempt count for cycle \(cycleId): \(currentCount + 1)")
-    }
+        // Show prompt if we're past the predicted start date
+        let today = calendar.startOfDay(for: Date())
+        let predictedStart = calendar.startOfDay(for: predictedStartDate)
 
-    /// Get current attempt count for a cycle
-    /// - Parameter cycleId: The cycle ID to check
-    /// - Returns: Number of attempts (0 if no attempts yet)
-    private func getAttemptCount(for cycleId: String) -> Int {
-        let key = attemptsKeyPrefix + cycleId
-        return UserDefaults.standard.integer(forKey: key)
-    }
-
-    /// Reset attempt count for a cycle (called when scheduling new notifications)
-    /// - Parameter cycleId: The cycle ID to reset
-    private func resetAttemptCount(for cycleId: String) {
-        let key = attemptsKeyPrefix + cycleId
-        UserDefaults.standard.set(0, forKey: key)
-        print("Reset attempt count for cycle \(cycleId)")
+        return today >= predictedStart
     }
 }
