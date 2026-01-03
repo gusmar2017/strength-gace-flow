@@ -12,7 +12,8 @@ struct CycleCalendarView: View {
     @State private var currentMonth = Date()
     @State private var showingAddDate = false
     @State private var showingDaySummary = false
-    @State private var selectedDate = Date()
+    @State private var selectedDate: Date?
+    @State private var addCycleDate = Date()
 
     private let calendar = Calendar.current
 
@@ -47,8 +48,11 @@ struct CycleCalendarView: View {
                                 nextPeriodDate: viewModel.nextPeriodDate,
                                 predictions: viewModel.predictions,
                                 onDateTap: { date in
-                                    selectedDate = date
-                                    showingDaySummary = true
+                                    selectedDate = nil  // Force sheet to recreate
+                                    DispatchQueue.main.async {
+                                        selectedDate = date
+                                        showingDaySummary = true
+                                    }
                                 }
                             )
 
@@ -69,7 +73,6 @@ struct CycleCalendarView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        selectedDate = Date()
                         showingAddDate = true
                     } label: {
                         Image(systemName: "plus")
@@ -78,7 +81,7 @@ struct CycleCalendarView: View {
             }
             .sheet(isPresented: $showingAddDate) {
                 AddCycleDateSheet(
-                    selectedDate: $selectedDate,
+                    selectedDate: $addCycleDate,
                     onSave: { date in
                         Task {
                             await viewModel.logCycleStart(date: date)
@@ -87,14 +90,16 @@ struct CycleCalendarView: View {
                 )
             }
             .sheet(isPresented: $showingDaySummary) {
-                CycleDaySummarySheet(
-                    date: selectedDate,
-                    cycleDates: viewModel.cycleDates,
-                    cycleHistory: viewModel.cycleHistory,
-                    predictions: viewModel.predictions,
-                    viewModel: viewModel
-                )
-                .id(selectedDate)
+                if let date = selectedDate {
+                    CycleDaySummarySheet(
+                        date: date,
+                        cycleDates: viewModel.cycleDates,
+                        cycleHistory: viewModel.cycleHistory,
+                        predictions: viewModel.predictions,
+                        viewModel: viewModel
+                    )
+                    .id(date)
+                }
             }
             .task {
                 await viewModel.loadCalendarData()
