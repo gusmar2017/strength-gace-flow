@@ -10,6 +10,7 @@ import SwiftUI
 struct CalendarDayCell: View {
     let date: Date
     let isCycleStart: Bool
+    let isPredictedStart: Bool
     let phaseColor: Color?
     let isToday: Bool
     let onTap: () -> Void
@@ -27,10 +28,16 @@ struct CalendarDayCell: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(phaseColor ?? Color.clear)
 
-                // Cycle start indicator - ring around the cell
+                // Actual cycle start indicator - solid ring
                 if isCycleStart {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.sgfMenstrual, lineWidth: 2.5)
+                }
+
+                // Predicted cycle start indicator - dashed ring
+                if isPredictedStart {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.sgfMenstrual, style: StrokeStyle(lineWidth: 2.5, dash: [4, 4]))
                 }
 
                 // Today indicator (overlays on top of cycle start if both apply)
@@ -43,12 +50,16 @@ struct CalendarDayCell: View {
                     Text(dateFormatter.string(from: date))
                         .font(.sgfSubheadline)
                         .foregroundColor(.sgfTextPrimary)
-                        .fontWeight(isCycleStart ? .semibold : .regular)
+                        .fontWeight((isCycleStart || isPredictedStart) ? .semibold : .regular)
 
-                    // Small dot indicator for cycle start
+                    // Small dot indicator for cycle start (solid for actual, hollow for predicted)
                     if isCycleStart {
                         Circle()
                             .fill(Color.sgfMenstrual)
+                            .frame(width: 5, height: 5)
+                    } else if isPredictedStart {
+                        Circle()
+                            .stroke(Color.sgfMenstrual, lineWidth: 1.5)
                             .frame(width: 5, height: 5)
                     }
                 }

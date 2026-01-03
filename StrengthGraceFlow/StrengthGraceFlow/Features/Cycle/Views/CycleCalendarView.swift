@@ -45,6 +45,7 @@ struct CycleCalendarView: View {
                             CalendarGridView(
                                 currentMonth: currentMonth,
                                 cycleDates: viewModel.cycleDates,
+                                nextPeriodDate: viewModel.nextPeriodDate,
                                 predictions: viewModel.predictions,
                                 onDateTap: { date in
                                     selectedDate = date

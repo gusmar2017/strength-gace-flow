@@ -10,6 +10,7 @@ import SwiftUI
 struct CalendarGridView: View {
     let currentMonth: Date
     let cycleDates: [Date]
+    let nextPeriodDate: Date?
     let predictions: [PhasePrediction]
     let onDateTap: (Date) -> Void
 
@@ -37,6 +38,9 @@ struct CalendarGridView: View {
                             isCycleStart: cycleDates.contains {
                                 calendar.isDate($0, inSameDayAs: date)
                             },
+                            isPredictedStart: nextPeriodDate.map {
+                                calendar.isDate($0, inSameDayAs: date)
+                            } ?? false,
                             phaseColor: phaseColor(for: date),
                             isToday: calendar.isDateInToday(date),
                             onTap: { onDateTap(date) }
