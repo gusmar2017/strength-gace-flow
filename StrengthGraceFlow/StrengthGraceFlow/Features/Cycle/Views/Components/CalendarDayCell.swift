@@ -66,6 +66,7 @@ struct CalendarDayCell: View {
         .frame(height: 44)
         .contentShape(Rectangle())
         .onTapGesture {
+            print("🟢 CalendarDayCell tapped: \(date)")
             onTap()
         }
     }
