@@ -125,9 +125,16 @@ def predict_phases(
         average_cycle_length=average_cycle_length,
     )
 
-    # Don't show future predictions on calendar - only historical/current data
-    # The next period prediction is shown as text below the calendar
-    effective_future_days = 0
+    # Show historical data plus the predicted next period only
+    # Calculate days from today to end of predicted period
+    predicted_period_end = next_period_start + timedelta(days=average_period_length - 1)
+
+    # If next period hasn't started yet, show it
+    if next_period_start > today:
+        effective_future_days = (predicted_period_end - today).days + 1
+    else:
+        # Next period already started (we're in it), no future predictions needed
+        effective_future_days = 0
 
     # Determine start date for historical predictions
     if earliest_cycle_date:
