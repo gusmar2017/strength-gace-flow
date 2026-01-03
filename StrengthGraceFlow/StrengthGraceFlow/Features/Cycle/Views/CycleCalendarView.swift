@@ -396,6 +396,15 @@ struct CycleDaySummarySheet: View {
         date > Date()
     }
 
+    private var isCycleStart: Bool {
+        cycleDates.contains { calendar.isDate($0, inSameDayAs: date) }
+    }
+
+    private var isPredictedStart: Bool {
+        guard let nextPeriod = viewModel.nextPeriodDate else { return false }
+        return calendar.isDate(nextPeriod, inSameDayAs: date) && isFutureDate
+    }
+
     var body: some View {
         VStack(spacing: SGFSpacing.lg) {
             // Drag indicator spacer
@@ -404,6 +413,31 @@ struct CycleDaySummarySheet: View {
             // Cycle Day Info
             if let day = cycleDay {
                 VStack(spacing: SGFSpacing.sm) {
+                    // Show special indicator for cycle start dates
+                    if isCycleStart {
+                        HStack(spacing: SGFSpacing.xs) {
+                            Image(systemName: "calendar.badge.checkmark")
+                                .font(.system(size: 20))
+                                .foregroundColor(.sgfMenstrual)
+                            Text("Period Start")
+                                .font(.sgfSubheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.sgfMenstrual)
+                        }
+                        .padding(.bottom, SGFSpacing.xs)
+                    } else if isPredictedStart {
+                        HStack(spacing: SGFSpacing.xs) {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 20))
+                                .foregroundColor(.sgfPrimary)
+                            Text("Predicted Period Start")
+                                .font(.sgfSubheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.sgfPrimary)
+                        }
+                        .padding(.bottom, SGFSpacing.xs)
+                    }
+
                     Text("Day \(day)")
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(.sgfPrimary)
@@ -413,7 +447,7 @@ struct CycleDaySummarySheet: View {
                         .foregroundColor(.sgfTextSecondary)
 
                     if isFutureDate {
-                        Text("Future Date")
+                        Text("Predicted")
                             .font(.sgfCaption)
                             .foregroundColor(.sgfTextTertiary)
                     }
