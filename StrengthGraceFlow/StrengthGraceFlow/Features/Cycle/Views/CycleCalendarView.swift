@@ -47,9 +47,7 @@ struct CycleCalendarView: View {
                                 nextPeriodDate: viewModel.nextPeriodDate,
                                 predictions: viewModel.predictions,
                                 onDateTap: { date in
-                                    print("🔵 Date tapped: \(date)")
                                     selectedDate = date
-                                    print("🔵 selectedDate set to: \(selectedDate)")
                                     showingDaySummary = true
                                 }
                             )
@@ -96,6 +94,7 @@ struct CycleCalendarView: View {
                     predictions: viewModel.predictions,
                     viewModel: viewModel
                 )
+                .id(selectedDate)
             }
             .task {
                 await viewModel.loadCalendarData()
@@ -370,7 +369,6 @@ struct CycleDaySummarySheet: View {
     }
 
     var body: some View {
-        let _ = print("🟡 CycleDaySummarySheet showing date: \(date)")
         VStack(spacing: SGFSpacing.lg) {
             // Drag indicator spacer
             Color.clear.frame(height: SGFSpacing.md)
