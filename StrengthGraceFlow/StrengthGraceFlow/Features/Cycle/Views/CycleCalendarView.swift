@@ -13,7 +13,6 @@ struct CycleCalendarView: View {
     @State private var showingAddDate = false
     @State private var showingDaySummary = false
     @State private var selectedDate = Date()
-    @State private var dragOffset: CGFloat = 0
 
     private let calendar = Calendar.current
 
@@ -41,7 +40,7 @@ struct CycleCalendarView: View {
                                 canNavigateForward: canNavigateForward
                             )
 
-                            // Calendar grid with phase shading and swipe support
+                            // Calendar grid with phase shading
                             CalendarGridView(
                                 currentMonth: currentMonth,
                                 cycleDates: viewModel.cycleDates,
@@ -51,43 +50,6 @@ struct CycleCalendarView: View {
                                     selectedDate = date
                                     showingDaySummary = true
                                 }
-                            )
-                            .offset(x: dragOffset)
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        dragOffset = value.translation.width
-                                    }
-                                    .onEnded { value in
-                                        let threshold: CGFloat = 50
-
-                                        if value.translation.width > threshold {
-                                            // Swipe right - previous month
-                                            withAnimation(.spring(response: 0.3)) {
-                                                currentMonth = calendar.date(
-                                                    byAdding: .month,
-                                                    value: -1,
-                                                    to: currentMonth
-                                                ) ?? currentMonth
-                                                dragOffset = 0
-                                            }
-                                        } else if value.translation.width < -threshold && canNavigateForward {
-                                            // Swipe left - next month (only if allowed)
-                                            withAnimation(.spring(response: 0.3)) {
-                                                currentMonth = calendar.date(
-                                                    byAdding: .month,
-                                                    value: 1,
-                                                    to: currentMonth
-                                                ) ?? currentMonth
-                                                dragOffset = 0
-                                            }
-                                        } else {
-                                            // Reset if threshold not met
-                                            withAnimation(.spring(response: 0.3)) {
-                                                dragOffset = 0
-                                            }
-                                        }
-                                    }
                             )
 
                             // Phase legend
