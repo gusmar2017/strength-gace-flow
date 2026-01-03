@@ -125,11 +125,9 @@ def predict_phases(
         average_cycle_length=average_cycle_length,
     )
 
-    # Limit future predictions to 3 days after next period start
-    # This prevents showing too many future cycles on the calendar
-    max_prediction_date = next_period_start + timedelta(days=3)
-    max_future_days = (max_prediction_date - today).days
-    effective_future_days = min(days_ahead, max_future_days)
+    # Don't show future predictions on calendar - only historical/current data
+    # The next period prediction is shown as text below the calendar
+    effective_future_days = 0
 
     # Determine start date for historical predictions
     if earliest_cycle_date:
