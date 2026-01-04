@@ -7,16 +7,22 @@
 
 import SwiftUI
 
-// Make Date identifiable for .sheet(item:) pattern
-extension Date: Identifiable {
-    public var id: TimeInterval { timeIntervalSince1970 }
+// Wrapper to make Date identifiable for .sheet(item:) pattern
+struct IdentifiableDate: Identifiable {
+    let id: TimeInterval
+    let date: Date
+
+    init(_ date: Date) {
+        self.date = date
+        self.id = date.timeIntervalSince1970
+    }
 }
 
 struct CycleCalendarView: View {
     @StateObject private var viewModel = CycleCalendarViewModel()
     @State private var currentMonth = Date()
     @State private var showingAddDate = false
-    @State private var selectedDateForSheet: Date?
+    @State private var selectedDateForSheet: IdentifiableDate?
     @State private var addCycleDate = Date()
 
     private let calendar = Calendar.current
@@ -52,11 +58,7 @@ struct CycleCalendarView: View {
                                 nextPeriodDate: viewModel.nextPeriodDate,
                                 predictions: viewModel.predictions,
                                 onDateTap: { date in
-                                    print("🔵 [TAP] Date tapped: \(date)")
-                                    print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
-                                    // Using .sheet(item:) pattern - just set the date and SwiftUI handles the rest
-                                    selectedDateForSheet = date
-                                    print("🔵 [STATE] selectedDateForSheet set to: \(date)")
+                                    selectedDateForSheet = IdentifiableDate(date)
                                 }
                             )
 
@@ -93,10 +95,9 @@ struct CycleCalendarView: View {
                     }
                 )
             }
-            .sheet(item: $selectedDateForSheet) { date in
-                let _ = print("🟣 [SHEET_INIT] Creating CycleDaySummarySheet for date: \(date)")
+            .sheet(item: $selectedDateForSheet) { identifiableDate in
                 CycleDaySummarySheet(
-                    date: date,
+                    date: identifiableDate.date,
                     cycleDates: viewModel.cycleDates,
                     cycleHistory: viewModel.cycleHistory,
                     predictions: viewModel.predictions,
@@ -323,33 +324,21 @@ struct CycleDaySummarySheet: View {
     }()
 
     private var cycleDay: Int? {
-        print("🟡 [CYCLE_DAY] Computing cycleDay for date: \(date)")
-        print("🟡 [CYCLE_DAY] All cycle dates: \(cycleDates)")
-
         // Find the most recent cycle start before or on this date (calendar-day aware)
         let sortedDates = cycleDates.sorted()
 
         // Normalize to start of day for consistent comparison across timezones
         let targetDayStart = calendar.startOfDay(for: date)
-        print("🟡 [CYCLE_DAY] Target day start (normalized): \(targetDayStart)")
 
         guard let mostRecentStart = sortedDates.last(where: { cycleDate in
             let cycleDayStart = calendar.startOfDay(for: cycleDate)
-            let isMatch = cycleDayStart <= targetDayStart
-            print("🟡 [CYCLE_DAY] Checking cycle date: \(cycleDate)")
-            print("🟡 [CYCLE_DAY]   - Normalized: \(cycleDayStart)")
-            print("🟡 [CYCLE_DAY]   - Is match (<= target): \(isMatch)")
-            return isMatch
+            return cycleDayStart <= targetDayStart
         }) else {
-            print("🟡 [CYCLE_DAY] ❌ No matching cycle start found")
             return nil
         }
 
-        print("🟡 [CYCLE_DAY] ✅ Found most recent start: \(mostRecentStart)")
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: mostRecentStart), to: targetDayStart).day ?? 0
-        let cycleDay = days + 1
-        print("🟡 [CYCLE_DAY] Calculated cycle day: \(cycleDay)")
-        return cycleDay
+        return days + 1
     }
 
     private var currentCycleForDate: CycleData? {
@@ -395,9 +384,6 @@ struct CycleDaySummarySheet: View {
     }
 
     var body: some View {
-        let _ = print("🟢 [SHEET] CycleDaySummarySheet body rendering for date: \(date)")
-        let _ = print("🟢 [SHEET] isCycleStart: \(isCycleStart), isPredictedStart: \(isPredictedStart)")
-
         VStack(spacing: SGFSpacing.lg) {
             // Drag indicator spacer
             Color.clear.frame(height: SGFSpacing.md)
