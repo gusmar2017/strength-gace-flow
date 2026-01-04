@@ -203,22 +203,22 @@ struct LogPeriodPromptCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SGFSpacing.md) {
-            HStack {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.sgfPrimary)
+            HStack(alignment: .top, spacing: SGFSpacing.sm) {
+                Image(systemName: "drop.circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(.sgfMenstrual)
 
                 VStack(alignment: .leading, spacing: SGFSpacing.xs) {
-                    Text("Did your period start?")
+                    Text("Is today day 1?")
                         .font(.sgfHeadline)
                         .foregroundColor(.sgfTextPrimary)
 
                     if daysLate > 0 {
-                        Text("\(daysLate) days since predicted start")
+                        Text("Your cycle may have started")
                             .font(.sgfCaption)
                             .foregroundColor(.sgfTextSecondary)
                     } else {
-                        Text("Expected around \(dateFormatter.string(from: predictedDate))")
+                        Text("Your cycle may begin soon")
                             .font(.sgfCaption)
                             .foregroundColor(.sgfTextSecondary)
                     }
@@ -230,7 +230,7 @@ struct LogPeriodPromptCard: View {
             Button(action: onLogPeriod) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                    Text("Log Period Start")
+                    Text("Mark day 1")
                 }
                 .font(.sgfSubheadline)
                 .fontWeight(.semibold)
