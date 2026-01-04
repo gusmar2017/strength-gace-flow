@@ -35,21 +35,19 @@ struct CycleCalendarView: View {
         return currentMonthStart < todayMonthStart
     }
 
-    // Show prompt if predicted period date has passed and user hasn't logged it
+    // Show prompt if a period was likely missed or is imminent
     private var shouldShowLogPeriodPrompt: Bool {
-        guard let predictedDate = viewModel.nextPeriodDate else { return false }
+        guard let lastCycleDate = viewModel.cycleDates.sorted().last else { return false }
 
         let today = Date()
-        let daysSincePrediction = calendar.dateComponents([.day], from: predictedDate, to: today).day ?? 0
+        let daysSinceLastLog = calendar.dateComponents([.day], from: lastCycleDate, to: today).day ?? 0
 
-        // Show prompt if we're within 3 days before or 7 days after predicted date
-        // and the last logged cycle is more than 21 days ago
-        if let lastCycleDate = viewModel.cycleDates.sorted().last {
-            let daysSinceLastLog = calendar.dateComponents([.day], from: lastCycleDate, to: today).day ?? 0
-            return daysSinceLastLog >= 21 && daysSincePrediction >= -3
-        }
+        // Get average cycle length from user profile, default to 28
+        let avgCycleLength = 28 // TODO: Get from user profile when available
 
-        return false
+        // Show prompt if user is at least 21 days into their cycle (likely in luteal phase or later)
+        // This catches both missed periods and upcoming periods
+        return daysSinceLastLog >= 21
     }
 
     var body: some View {
