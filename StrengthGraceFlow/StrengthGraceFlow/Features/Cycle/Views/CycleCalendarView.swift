@@ -35,6 +35,23 @@ struct CycleCalendarView: View {
         return currentMonthStart < todayMonthStart
     }
 
+    // Show prompt if predicted period date has passed and user hasn't logged it
+    private var shouldShowLogPeriodPrompt: Bool {
+        guard let predictedDate = viewModel.nextPeriodDate else { return false }
+
+        let today = Date()
+        let daysSincePrediction = calendar.dateComponents([.day], from: predictedDate, to: today).day ?? 0
+
+        // Show prompt if we're within 3 days before or 7 days after predicted date
+        // and the last logged cycle is more than 21 days ago
+        if let lastCycleDate = viewModel.cycleDates.sorted().last {
+            let daysSinceLastLog = calendar.dateComponents([.day], from: lastCycleDate, to: today).day ?? 0
+            return daysSinceLastLog >= 21 && daysSincePrediction >= -3
+        }
+
+        return false
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -62,11 +79,18 @@ struct CycleCalendarView: View {
                                 }
                             )
 
-                            // Phase legend
-                            PhaseLegendView()
+                            // Prompt to log period if predicted date has passed
+                            if shouldShowLogPeriodPrompt {
+                                LogPeriodPromptCard(
+                                    predictedDate: viewModel.nextPeriodDate ?? Date(),
+                                    onLogPeriod: {
+                                        showingAddDate = true
+                                    }
+                                )
+                            }
 
-                            // Next period prediction
-                            if let nextPeriod = viewModel.nextPeriodDate {
+                            // Next period prediction (only show if not prompting to log)
+                            if !shouldShowLogPeriodPrompt, let nextPeriod = viewModel.nextPeriodDate {
                                 NextPeriodCard(date: nextPeriod)
                             }
                         }
@@ -162,48 +186,74 @@ struct MonthNavigationView: View {
     }
 }
 
-// MARK: - Phase Legend View
+// MARK: - Log Period Prompt Card
 
-struct PhaseLegendView: View {
+struct LogPeriodPromptCard: View {
+    let predictedDate: Date
+    let onLogPeriod: () -> Void
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
+
+    private var daysLate: Int {
+        let days = Calendar.current.dateComponents([.day], from: predictedDate, to: Date()).day ?? 0
+        return max(0, days)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: SGFSpacing.sm) {
-            Text("Phase Guide")
-                .font(.sgfHeadline)
-                .foregroundColor(.sgfTextPrimary)
+        VStack(alignment: .leading, spacing: SGFSpacing.md) {
+            HStack {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.sgfPrimary)
 
-            HStack(spacing: SGFSpacing.md) {
-                PhaseLegendItem(color: .sgfMenstrual, label: "Menstrual")
-                PhaseLegendItem(color: .sgfFollicular, label: "Follicular")
+                VStack(alignment: .leading, spacing: SGFSpacing.xs) {
+                    Text("Did your period start?")
+                        .font(.sgfHeadline)
+                        .foregroundColor(.sgfTextPrimary)
+
+                    if daysLate > 0 {
+                        Text("\(daysLate) days since predicted start")
+                            .font(.sgfCaption)
+                            .foregroundColor(.sgfTextSecondary)
+                    } else {
+                        Text("Expected around \(dateFormatter.string(from: predictedDate))")
+                            .font(.sgfCaption)
+                            .foregroundColor(.sgfTextSecondary)
+                    }
+                }
+
+                Spacer()
             }
 
-            HStack(spacing: SGFSpacing.md) {
-                PhaseLegendItem(color: .sgfOvulatory, label: "Ovulatory")
-                PhaseLegendItem(color: .sgfLuteal, label: "Luteal")
+            Button(action: onLogPeriod) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Log Period Start")
+                }
+                .font(.sgfSubheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, SGFSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: SGFCornerRadius.sm)
+                        .fill(Color.sgfPrimary)
+                )
             }
         }
         .padding(SGFSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: SGFCornerRadius.md)
-                .fill(Color.sgfSurface)
+                .fill(Color.sgfMenstrual.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: SGFCornerRadius.md)
+                        .stroke(Color.sgfMenstrual.opacity(0.3), lineWidth: 1)
+                )
         )
-    }
-}
-
-struct PhaseLegendItem: View {
-    let color: Color
-    let label: String
-
-    var body: some View {
-        HStack(spacing: SGFSpacing.xs) {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(color.opacity(0.3))
-                .frame(width: 20, height: 20)
-
-            Text(label)
-                .font(.sgfCaption)
-                .foregroundColor(.sgfTextSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
