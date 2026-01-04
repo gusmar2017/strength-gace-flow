@@ -48,7 +48,7 @@ class APIService {
     private init() {}
 
     // Custom date decoder that handles both ISO8601 datetime and date-only formats
-    private static let customDateDecoder: (Decoder) throws -> Date = { decoder in
+    private static let customDateDecoder: @Sendable (Decoder) throws -> Date = { decoder in
         let container = try decoder.singleValueContainer()
         let dateString = try container.decode(String.self)
 
