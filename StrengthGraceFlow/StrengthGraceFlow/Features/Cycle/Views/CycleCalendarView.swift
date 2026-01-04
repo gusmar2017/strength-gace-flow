@@ -48,9 +48,12 @@ struct CycleCalendarView: View {
                                 nextPeriodDate: viewModel.nextPeriodDate,
                                 predictions: viewModel.predictions,
                                 onDateTap: { date in
+                                    print("🔵 [TAP] Date tapped: \(date)")
+                                    print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
                                     selectedDate = nil  // Force sheet to recreate
                                     DispatchQueue.main.async {
                                         selectedDate = date
+                                        print("🔵 [STATE] selectedDate set to: \(date)")
                                         showingDaySummary = true
                                     }
                                 }
@@ -91,6 +94,7 @@ struct CycleCalendarView: View {
             }
             .sheet(isPresented: $showingDaySummary) {
                 if let date = selectedDate {
+                    let _ = print("🟣 [SHEET_INIT] Creating CycleDaySummarySheet for selectedDate: \(date)")
                     CycleDaySummarySheet(
                         date: date,
                         cycleDates: viewModel.cycleDates,
@@ -321,14 +325,33 @@ struct CycleDaySummarySheet: View {
     }()
 
     private var cycleDay: Int? {
-        // Find the most recent cycle start before or on this date
+        print("🟡 [CYCLE_DAY] Computing cycleDay for date: \(date)")
+        print("🟡 [CYCLE_DAY] All cycle dates: \(cycleDates)")
+
+        // Find the most recent cycle start before or on this date (calendar-day aware)
         let sortedDates = cycleDates.sorted()
-        guard let mostRecentStart = sortedDates.last(where: { $0 <= date }) else {
+
+        // Normalize to start of day for consistent comparison across timezones
+        let targetDayStart = calendar.startOfDay(for: date)
+        print("🟡 [CYCLE_DAY] Target day start (normalized): \(targetDayStart)")
+
+        guard let mostRecentStart = sortedDates.last(where: { cycleDate in
+            let cycleDayStart = calendar.startOfDay(for: cycleDate)
+            let isMatch = cycleDayStart <= targetDayStart
+            print("🟡 [CYCLE_DAY] Checking cycle date: \(cycleDate)")
+            print("🟡 [CYCLE_DAY]   - Normalized: \(cycleDayStart)")
+            print("🟡 [CYCLE_DAY]   - Is match (<= target): \(isMatch)")
+            return isMatch
+        }) else {
+            print("🟡 [CYCLE_DAY] ❌ No matching cycle start found")
             return nil
         }
 
-        let days = calendar.dateComponents([.day], from: mostRecentStart, to: date).day ?? 0
-        return days + 1
+        print("🟡 [CYCLE_DAY] ✅ Found most recent start: \(mostRecentStart)")
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: mostRecentStart), to: targetDayStart).day ?? 0
+        let cycleDay = days + 1
+        print("🟡 [CYCLE_DAY] Calculated cycle day: \(cycleDay)")
+        return cycleDay
     }
 
     private var currentCycleForDate: CycleData? {
@@ -374,6 +397,9 @@ struct CycleDaySummarySheet: View {
     }
 
     var body: some View {
+        let _ = print("🟢 [SHEET] CycleDaySummarySheet body rendering for date: \(date)")
+        let _ = print("🟢 [SHEET] isCycleStart: \(isCycleStart), isPredictedStart: \(isPredictedStart)")
+
         VStack(spacing: SGFSpacing.lg) {
             // Drag indicator spacer
             Color.clear.frame(height: SGFSpacing.md)
