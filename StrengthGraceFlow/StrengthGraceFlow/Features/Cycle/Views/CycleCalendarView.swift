@@ -7,12 +7,16 @@
 
 import SwiftUI
 
+// Make Date identifiable for .sheet(item:) pattern
+extension Date: Identifiable {
+    public var id: TimeInterval { timeIntervalSince1970 }
+}
+
 struct CycleCalendarView: View {
     @StateObject private var viewModel = CycleCalendarViewModel()
     @State private var currentMonth = Date()
     @State private var showingAddDate = false
-    @State private var showingDaySummary = false
-    @State private var selectedDate: Date?
+    @State private var selectedDateForSheet: Date?
     @State private var addCycleDate = Date()
 
     private let calendar = Calendar.current
@@ -50,15 +54,9 @@ struct CycleCalendarView: View {
                                 onDateTap: { date in
                                     print("🔵 [TAP] Date tapped: \(date)")
                                     print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
-                                    print("🔵 [TAP] showingDaySummary BEFORE: \(showingDaySummary)")
-                                    // Set selectedDate synchronously
-                                    selectedDate = date
-                                    print("🔵 [STATE] selectedDate set to: \(date)")
-                                    // Show sheet asynchronously to let SwiftUI process the selectedDate update first
-                                    DispatchQueue.main.async {
-                                        showingDaySummary = true
-                                        print("🔵 [STATE] showingDaySummary set to: \(showingDaySummary)")
-                                    }
+                                    // Using .sheet(item:) pattern - just set the date and SwiftUI handles the rest
+                                    selectedDateForSheet = date
+                                    print("🔵 [STATE] selectedDateForSheet set to: \(date)")
                                 }
                             )
 
@@ -95,22 +93,15 @@ struct CycleCalendarView: View {
                     }
                 )
             }
-            .sheet(isPresented: $showingDaySummary) {
-                let _ = print("🟣 [SHEET_CLOSURE] Sheet closure called, selectedDate: \(String(describing: selectedDate))")
-                if let date = selectedDate {
-                    let _ = print("🟣 [SHEET_INIT] Creating CycleDaySummarySheet for selectedDate: \(date)")
-                    CycleDaySummarySheet(
-                        date: date,
-                        cycleDates: viewModel.cycleDates,
-                        cycleHistory: viewModel.cycleHistory,
-                        predictions: viewModel.predictions,
-                        viewModel: viewModel
-                    )
-                    .id(date)
-                } else {
-                    let _ = print("🟣 [SHEET_ERROR] selectedDate is nil!")
-                    Color.clear
-                }
+            .sheet(item: $selectedDateForSheet) { date in
+                let _ = print("🟣 [SHEET_INIT] Creating CycleDaySummarySheet for date: \(date)")
+                CycleDaySummarySheet(
+                    date: date,
+                    cycleDates: viewModel.cycleDates,
+                    cycleHistory: viewModel.cycleHistory,
+                    predictions: viewModel.predictions,
+                    viewModel: viewModel
+                )
             }
             .task {
                 await viewModel.loadCalendarData()
