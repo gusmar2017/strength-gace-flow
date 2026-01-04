@@ -50,10 +50,12 @@ struct CycleCalendarView: View {
                                 onDateTap: { date in
                                     print("🔵 [TAP] Date tapped: \(date)")
                                     print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
+                                    print("🔵 [TAP] showingDaySummary BEFORE: \(showingDaySummary)")
                                     // Set date first, then show sheet
                                     selectedDate = date
                                     print("🔵 [STATE] selectedDate set to: \(date)")
                                     showingDaySummary = true
+                                    print("🔵 [STATE] showingDaySummary set to: \(showingDaySummary)")
                                 }
                             )
 
@@ -91,6 +93,7 @@ struct CycleCalendarView: View {
                 )
             }
             .sheet(isPresented: $showingDaySummary) {
+                let _ = print("🟣 [SHEET_CLOSURE] Sheet closure called, selectedDate: \(String(describing: selectedDate))")
                 if let date = selectedDate {
                     let _ = print("🟣 [SHEET_INIT] Creating CycleDaySummarySheet for selectedDate: \(date)")
                     CycleDaySummarySheet(
@@ -101,6 +104,9 @@ struct CycleCalendarView: View {
                         viewModel: viewModel
                     )
                     .id(date)
+                } else {
+                    let _ = print("🟣 [SHEET_ERROR] selectedDate is nil!")
+                    Color.clear
                 }
             }
             .task {
