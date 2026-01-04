@@ -50,12 +50,10 @@ struct CycleCalendarView: View {
                                 onDateTap: { date in
                                     print("🔵 [TAP] Date tapped: \(date)")
                                     print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
-                                    selectedDate = nil  // Force sheet to recreate
-                                    DispatchQueue.main.async {
-                                        selectedDate = date
-                                        print("🔵 [STATE] selectedDate set to: \(date)")
-                                        showingDaySummary = true
-                                    }
+                                    // Set date first, then show sheet
+                                    selectedDate = date
+                                    print("🔵 [STATE] selectedDate set to: \(date)")
+                                    showingDaySummary = true
                                 }
                             )
 
