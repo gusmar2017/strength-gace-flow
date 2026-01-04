@@ -51,11 +51,14 @@ struct CycleCalendarView: View {
                                     print("🔵 [TAP] Date tapped: \(date)")
                                     print("🔵 [TAP] Cycle dates available: \(viewModel.cycleDates)")
                                     print("🔵 [TAP] showingDaySummary BEFORE: \(showingDaySummary)")
-                                    // Set date first, then show sheet
+                                    // Set selectedDate synchronously
                                     selectedDate = date
                                     print("🔵 [STATE] selectedDate set to: \(date)")
-                                    showingDaySummary = true
-                                    print("🔵 [STATE] showingDaySummary set to: \(showingDaySummary)")
+                                    // Show sheet asynchronously to let SwiftUI process the selectedDate update first
+                                    DispatchQueue.main.async {
+                                        showingDaySummary = true
+                                        print("🔵 [STATE] showingDaySummary set to: \(showingDaySummary)")
+                                    }
                                 }
                             )
 
